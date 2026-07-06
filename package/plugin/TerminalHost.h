@@ -49,6 +49,8 @@ Q_SIGNALS:
 
 private:
     QPointer<QWidget> m_hostWidget;
-    KParts::ReadOnlyPart *m_part = nullptr;
+    // QPointer, not a raw pointer: konsolepart deletes itself when the shell
+    // inside exits (e.g. typing "exit"), so this must auto-null instead of dangling.
+    QPointer<KParts::ReadOnlyPart> m_part;
     bool m_available = false;
 };

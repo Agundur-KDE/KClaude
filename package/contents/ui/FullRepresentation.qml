@@ -211,7 +211,14 @@ Item {
         PlasmaComponents.ToolButton {
             icon.name: "go-previous"
             text: i18n("Back to sessions")
-            onClicked: root.terminalActive = false
+            // Only hides the embedded terminal — the shell (and whatever runs in
+            // it) keeps running in the background, nothing gets killed here.
+            onClicked: {
+                root.terminalActive = false
+                root.forceActiveFocus()
+                if (root.Window.window)
+                    root.Window.window.requestActivate()
+            }
         }
 
         Window.WindowContainer {

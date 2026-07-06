@@ -16,6 +16,7 @@ include(KDECompilerSettings NO_POLICY_SCOPE)
 include(ECMFindQmlModule)
 include(ECMQmlModule)
 include(ECMAddTests)
+include(ECMInstallIcons)
 
 find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Core
@@ -39,6 +40,17 @@ add_test(NAME validate-metadata
 
 ki18n_install(translate
     INSTALL_DESTINATION ${KDE_INSTALL_LOCALEDIR}
+)
+
+ecm_install_icons(
+    ICONS icons/16-apps-kclaude.png
+          icons/22-apps-kclaude.png
+          icons/32-apps-kclaude.png
+          icons/48-apps-kclaude.png
+          icons/64-apps-kclaude.png
+          icons/128-apps-kclaude.png
+          icons/256-apps-kclaude.png
+    DESTINATION ${KDE_INSTALL_ICONDIR}
 )
 
 add_subdirectory(package)

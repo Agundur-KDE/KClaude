@@ -10,7 +10,7 @@
         "BugReportUrl": "https://github.com/Agundur-KDE/KClaude/issues",
         "Category": "Status Information",
         "Description": "Claude Code Sessions merken und mit einem Klick im richtigen Verzeichnis fortsetzen",
-        "Icon": "utilities-terminal",
+        "Icon": "kclaude",
         "Id": "de.agundur.kclaude",
         "License": "GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL",
         "Name": "KClaude",
