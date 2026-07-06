@@ -17,6 +17,7 @@ Item {
     property var sessions: []
     property bool terminalActive: false
     property bool addingSession: false
+    property bool soundEnabled: true
 
     // ponytail: JSON file instead of KConfig — sessions are a list of objects,
     // kcfg has no clean way to store that; a flat file + FileReader does.
@@ -24,6 +25,24 @@ Item {
         id: store
         path: "~/.config/kclaude/sessions.json"
         onContentChanged: root.reload()
+    }
+
+    // Same toggle the claude-notify.sh Notification hook reads before playing a sound.
+    FileReader {
+        id: notifyStore
+        path: "~/.config/kclaude/notify.json"
+        onContentChanged: {
+            try {
+                root.soundEnabled = notifyStore.content ? (JSON.parse(notifyStore.content).sound !== false) : true
+            } catch (e) {
+                root.soundEnabled = true
+            }
+        }
+    }
+
+    function setSoundEnabled(enabled) {
+        soundEnabled = enabled
+        notifyStore.write(JSON.stringify({ sound: enabled }))
     }
 
     TerminalHost {
@@ -60,10 +79,20 @@ Item {
         spacing: Kirigami.Units.smallSpacing
         visible: !root.terminalActive
 
-        PlasmaComponents.Label {
-            text: i18n("KClaude Sessions")
-            font.bold: true
+        RowLayout {
             Layout.fillWidth: true
+
+            PlasmaComponents.Label {
+                text: i18n("KClaude Sessions")
+                font.bold: true
+                Layout.fillWidth: true
+            }
+
+            PlasmaComponents.CheckBox {
+                text: i18n("Warnton bei Rückfragen")
+                checked: root.soundEnabled
+                onToggled: root.setSoundEnabled(checked)
+            }
         }
 
         ListView {

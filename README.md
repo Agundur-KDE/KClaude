@@ -1,56 +1,51 @@
 <div align="center">
-  <h1>KDE Plasma 6 Plasmoid Template</h1>
-
-  <a href="https://kde.org/">
-    <img src="https://img.shields.io/badge/KDE_Plasma-6.7+-blue?style=flat&logo=kde" alt="KDE Plasma 6">
-  </a>
-  <a href="https://www.gnu.org/licenses/gpl-3.0.html">
-    <img src="https://img.shields.io/badge/License-GPL--2.0%2B-blue.svg" alt="License: GPL-2.0+">
-  </a>
-  <a href="https://paypal.me/agundur">
-    <img src="https://img.shields.io/badge/donate-PayPal-%2337a556" alt="PayPal">
-  </a>
-  <a href="https://liberapay.com/Agundur/donate">
-    <img src="https://liberapay.com/assets/widgets/donate.svg" alt="Donate using Liberapay">
-  </a>
+  <h1>KClaude</h1>
+  <p>KDE Plasma 6 panel widget for Claude Code: save sessions, resume them<br>
+  in an embedded terminal, get notified in the panel when Claude asks something.</p>
 </div>
 
-## What's included
+## What it does
 
-A clean, minimal starting point for a **KDE Plasma 6 Plasmoid** — pure QML, no boilerplate:
+- **Session launcher.** Save a name, description, working directory and
+  `claude --resume` session ID. Click a saved session and KClaude opens a real
+  terminal — embedded in the plasmoid via `konsolepart` (the same KPart Kate
+  uses for its built-in terminal) — already `cd`'d into the right directory,
+  and types `claude --resume <id>` for you.
+- **Panel notifications.** `scripts/claude-notify.sh` hooks into Claude Code's
+  `Notification` event and pops up a panel notification (+ optional warning
+  sound) whenever Claude is waiting on you — permission prompt, idle, or an
+  MCP elicitation dialog. The sound is toggled from the plasmoid itself.
 
-| Feature | Details |
-|---|---|
-| Compact + Full representation | Panel icon expands to full popup |
-| Config dialog | `configNetwork.qml` with KCM.SimpleKCM + `main.xml` for persistent settings |
-| i18n | `translate/` with `.po` files for de, en, es, fr — `ki18n_install` wired up |
-| Qt Quick Test | `tests/tst_plasmoid.qml` — run with `ctest` |
-| Clean CMake | Only what's needed: ECM, KF6 Config/I18n/KCMUtils, Qt6 Quick/Test |
+Sessions persist to `~/.config/kclaude/sessions.json`, the sound toggle to
+`~/.config/kclaude/notify.json` — both plain JSON, no daemon required.
 
 ## Requirements
 
-- Qt ≥ 6.7
-- KDE Frameworks ≥ 6.10
-- CMake ≥ 3.16
-- Extra CMake Modules (ECM)
+- Qt ≥ 6.7, KDE Frameworks ≥ 6.10 (incl. KParts), CMake ≥ 3.16, Extra CMake Modules
+- `konsolepart` (ships with Konsole), `gdbus`, `paplay`, `jq` — for the notification hook
 
 On openSUSE Tumbleweed:
 ```bash
-sudo zypper install cmake extra-cmake-modules kf6-ki18n-devel kf6-kconfigwidgets-devel \
-     kf6-kcmutils-devel qt6-quick-devel qt6-test-devel
+sudo zypper install cmake extra-cmake-modules kf6-ki18n-devel kf6-parts-devel \
+     qt6-quick-devel qt6-widgets-devel qt6-test-devel
 ```
 
-On Arch / KDE neon / Ubuntu with KDE PPA — install the equivalent `*-dev` packages.
-
-## Build
+## Build & install
 
 ```bash
-git clone https://github.com/Agundur-KDE/KDE-Plasma-Plasmoid-template.git
-cd KDE-Plasma-Plasmoid-template
+git clone git@github.com:Agundur-KDE/KClaude.git
+cd KClaude
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 sudo make install
+```
+
+## Try it without installing
+
+```bash
+kpackagetool6 --type Plasma/Applet --install package/
+QML_IMPORT_PATH=build/bin QT_QPA_PLATFORM=xcb plasmoidviewer -a de.agundur.kclaude
 ```
 
 ## Test
@@ -62,36 +57,26 @@ make tst_plasmoid
 ctest --output-on-failure
 ```
 
-Tests live in `tests/tst_plasmoid.qml`. Add `TestCase { }` blocks there as your plasmoid grows.
+## Panel notifications setup
 
-## Rename for your project
+Add to `~/.claude/settings.json`:
 
-After cloning, run the interactive rename script once:
-
-```bash
-bash rename.sh
+```json
+{
+  "hooks": {
+    "Notification": [
+      { "matcher": "permission_prompt", "hooks": [{ "type": "command", "command": "bash /home/alec/projects/KClaude/scripts/claude-notify.sh" }] },
+      { "matcher": "idle_prompt", "hooks": [{ "type": "command", "command": "bash /home/alec/projects/KClaude/scripts/claude-notify.sh" }] },
+      { "matcher": "elicitation_dialog", "hooks": [{ "type": "command", "command": "bash /home/alec/projects/KClaude/scripts/claude-notify.sh" }] }
+    ]
+  }
+}
 ```
 
-It replaces all occurrences of `de.agundur.kclaude` / `kclaude` / `KClaude`,
-renames the `.po` translation files, and updates `metadata.json` (name, description, author, URLs).
-
-## Quick install without CMake (for development)
-
-```bash
-kpackagetool6 --install package/
-# reload with:
-plasmoidviewer -a de.agundur.kclaude
-# or on Wayland:
-QT_QPA_PLATFORM=xcb plasmoidviewer -a de.agundur.kclaude
-```
-
-## Customising
-
-1. **Rename** — find/replace `de.agundur.kclaude` and `kclaude` in `CMakeLists.txt` and `package/metadata.json`
-2. **UI** — edit `package/contents/ui/FullRepresentation.qml` for the popup content
-3. **Settings** — add entries to `package/contents/config/main.xml` and a matching field in `configNetwork.qml`
-4. **C++ plugin** — uncomment `add_subdirectory(plugin)` in `package/CMakeLists.txt` and add your plugin there
+The `Notification` hook is fire-and-forget — it can inform you, not answer the
+prompt for you. Toggle the warning sound from the "Warnton bei Rückfragen"
+checkbox in the plasmoid; the popup itself always shows.
 
 ## Contributing
 
-Fork and adapt freely. If you improve something others would benefit from, a pull request is welcome.
+Fork and adapt freely.
