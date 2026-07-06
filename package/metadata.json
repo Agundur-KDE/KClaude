@@ -3,19 +3,19 @@
     "KPlugin": {
         "Authors": [
             {
-                "Email": "info@agundur.de",
-                "Name": "Agundur"
+                "Name": "Alec S.",
+                "Email": "scholz@agundur.de"
             }
         ],
-        "BugReportUrl": "https://github.com/Agundur-KDE/KDE-Plasma-Plasmoid-template/issues",
+        "BugReportUrl": "https://github.com/Agundur-KDE/KClaude/issues",
         "Category": "Status Information",
-        "Description": "A skeleton to get you started building a Plasmoid",
-        "Icon": "kdesrc-build",
-        "Id": "de.agundur.myplasmoid",
+        "Description": "Claude Code Sessions merken und mit einem Klick im richtigen Verzeichnis fortsetzen",
+        "Icon": "utilities-terminal",
+        "Id": "de.agundur.kclaude",
         "License": "GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL",
-        "Name": "KDE-Template",
+        "Name": "KClaude",
         "Version": "0.1",
-        "Website": "https://github.com/Agundur-KDE/KDE-Plasma-Plasmoid-template"
+        "Website": "https://github.com/Agundur-KDE/KClaude"
     },
     "X-Plasma-API-Minimum-Version": "6.0"
 }

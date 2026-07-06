@@ -28,6 +28,7 @@ public:
     void setPath(const QString &path);
 
     Q_INVOKABLE void reload();
+    Q_INVOKABLE bool write(const QString &content);
 
 Q_SIGNALS:
     void pathChanged();

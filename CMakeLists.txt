@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(myplasmoid)
+project(kclaude)
 
 set(QT_MIN_VERSION "6.7.0")
 set(KF6_MIN_VERSION "6.10.0")
@@ -20,14 +20,14 @@ include(ECMAddTests)
 find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Core
     Quick
+    Widgets
     Test
     QuickTest
 )
 
 find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
-    Config
     I18n
-    KCMUtils
+    Parts
 )
 
 enable_testing()
@@ -46,5 +46,5 @@ add_subdirectory(tests)
 
 install(
     DIRECTORY package/
-    DESTINATION ${KDE_INSTALL_DATADIR}/plasma/plasmoids/de.agundur.myplasmoid
+    DESTINATION ${KDE_INSTALL_DATADIR}/plasma/plasmoids/de.agundur.kclaude
 )

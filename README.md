@@ -72,7 +72,7 @@ After cloning, run the interactive rename script once:
 bash rename.sh
 ```
 
-It replaces all occurrences of `de.agundur.myplasmoid` / `myplasmoid` / `KDE-Template`,
+It replaces all occurrences of `de.agundur.kclaude` / `kclaude` / `KClaude`,
 renames the `.po` translation files, and updates `metadata.json` (name, description, author, URLs).
 
 ## Quick install without CMake (for development)
@@ -80,14 +80,14 @@ renames the `.po` translation files, and updates `metadata.json` (name, descript
 ```bash
 kpackagetool6 --install package/
 # reload with:
-plasmoidviewer -a de.agundur.myplasmoid
+plasmoidviewer -a de.agundur.kclaude
 # or on Wayland:
-QT_QPA_PLATFORM=xcb plasmoidviewer -a de.agundur.myplasmoid
+QT_QPA_PLATFORM=xcb plasmoidviewer -a de.agundur.kclaude
 ```
 
 ## Customising
 
-1. **Rename** — find/replace `de.agundur.myplasmoid` and `myplasmoid` in `CMakeLists.txt` and `package/metadata.json`
+1. **Rename** — find/replace `de.agundur.kclaude` and `kclaude` in `CMakeLists.txt` and `package/metadata.json`
 2. **UI** — edit `package/contents/ui/FullRepresentation.qml` for the popup content
 3. **Settings** — add entries to `package/contents/config/main.xml` and a matching field in `configNetwork.qml`
 4. **C++ plugin** — uncomment `add_subdirectory(plugin)` in `package/CMakeLists.txt` and add your plugin there

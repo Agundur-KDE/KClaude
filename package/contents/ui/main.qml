@@ -13,17 +13,16 @@ PlasmoidItem {
         return fullRepresentation;
     }
 
-    Plasmoid.title: i18n("myplasmoid")
+    Plasmoid.title: i18n("KClaude")
     Plasmoid.status: PlasmaCore.Types.ActiveStatus
     Plasmoid.backgroundHints: PlasmaCore.Types.DefaultBackground | PlasmaCore.Types.ConfigurableBackground
     toolTipMainText: Plasmoid.title
 
     fullRepresentation: FullRepresentation {
-        Layout.minimumWidth: 320
-        Layout.minimumHeight: 300
-        Component.onCompleted: {
-            console.log(i18n("setting from config:: %1").arg(Plasmoid.configuration.Host));
-        }
+        Layout.minimumWidth: 480
+        Layout.minimumHeight: 420
+        Layout.preferredWidth: 560
+        Layout.preferredHeight: 480
     }
 
     compactRepresentation: Item {

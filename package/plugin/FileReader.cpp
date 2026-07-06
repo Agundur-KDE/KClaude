@@ -4,8 +4,18 @@
  */
 #include "FileReader.h"
 
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QTextStream>
+
+// ponytail: "~" expansion is the one bit of shell convenience QFile doesn't do for us.
+static QString expandTilde(const QString &path)
+{
+    if (path.startsWith(QLatin1Char('~')))
+        return QDir::homePath() + path.mid(1);
+    return path;
+}
 
 FileReader::FileReader(QObject *parent)
     : QObject(parent)
@@ -15,16 +25,18 @@ FileReader::FileReader(QObject *parent)
 
 void FileReader::setPath(const QString &path)
 {
-    if (m_path == path)
+    const QString resolved = expandTilde(path);
+    if (m_path == resolved)
         return;
 
     if (!m_path.isEmpty())
         m_watcher.removePath(m_path);
 
-    m_path = path;
+    m_path = resolved;
 
     if (!m_path.isEmpty()) {
-        m_watcher.addPath(m_path);
+        if (QFile::exists(m_path))
+            m_watcher.addPath(m_path);
         readFile();
     }
 
@@ -34,6 +46,30 @@ void FileReader::setPath(const QString &path)
 void FileReader::reload()
 {
     readFile();
+}
+
+bool FileReader::write(const QString &content)
+{
+    if (m_path.isEmpty())
+        return false;
+
+    QDir().mkpath(QFileInfo(m_path).absolutePath());
+
+    QFile f(m_path);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Text))
+        return false;
+
+    QTextStream(&f) << content;
+    f.close();
+
+    if (!m_watcher.files().contains(m_path))
+        m_watcher.addPath(m_path);
+
+    if (content != m_content) {
+        m_content = content;
+        Q_EMIT contentChanged();
+    }
+    return true;
 }
 
 void FileReader::readFile()
