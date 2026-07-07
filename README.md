@@ -1,8 +1,7 @@
 <div align="center">
   <h1>KClaude</h1>
   <p>KDE Plasma 6 panel widget for Claude Code: save sessions, resume them<br>
-  in a terminal, see at a glance which ones are waiting on you and how full<br>
-  their context window is.</p>
+  in a terminal, see at a glance which ones are waiting on you.</p>
 </div>
 
 ## What it does
@@ -11,16 +10,23 @@
   `claude --resume` session ID. Click a saved session and KClaude spawns
   `konsole --workdir <dir> -e claude --resume <id>` for you.
 - **Live status per session.** A colored dot next to each session shows
-  whether Claude is running or waiting on you, plus a `%` figure for how full
-  its context window is.
+  whether Claude is running or waiting on you.
 - **Panel notifications.** `scripts/claude-notify.sh` hooks into Claude Code's
   `Notification` event and pops up a panel notification (+ optional warning
   sound) whenever Claude is waiting on you — permission prompt, idle, or an
   MCP elicitation dialog. The sound is toggled from the plasmoid itself.
+- **Region screenshot button.** Runs `spectacle -r -b -n -c` — drag a
+  rectangle, image lands straight in the clipboard, no save/copy dialogs.
+  Handy for pasting something into a Claude Code session.
 
 Sessions persist to `~/.config/kclaude/sessions.json`, the sound toggle to
 `~/.config/kclaude/notify.json`, live status to `~/.config/kclaude/status.json`
 — all plain JSON, no daemon required.
+
+Rate-limit/quota info (how many tokens are left in your current 5h/weekly
+window, and when it resets) is a different thing entirely from the
+per-session state shown here — see "Rate-limit quota" below instead of
+expecting it in this list.
 
 There's no embedded terminal and no C++ process handling anymore — clicking a
 session just launches a real, independent `konsole` window via Plasma's
@@ -72,10 +78,6 @@ Add to `~/.claude/settings.json`:
 
 ```json
 {
-  "statusLine": {
-    "type": "command",
-    "command": "bash /home/alec/projects/KClaude/scripts/claude-statusline.sh"
-  },
   "hooks": {
     "UserPromptSubmit": [
       { "hooks": [{ "type": "command", "command": "bash /home/alec/projects/KClaude/scripts/claude-running.sh" }] }
@@ -89,18 +91,24 @@ Add to `~/.claude/settings.json`:
 }
 ```
 
-- `claude-statusline.sh` writes the context-window `used_percentage` into
-  `status.json` on every prompt render, then passes through to whatever
-  statusLine command you already had configured (so your terminal prompt
-  itself doesn't change) — if you use a different statusLine tool, adjust the
-  pass-through call at the bottom of the script.
 - `claude-running.sh` marks a session "running" again once you submit a prompt.
 - `claude-notify.sh` marks a session "waiting" (plus sound + popup) when
   Claude pauses for input.
 
 The `Notification` hook is fire-and-forget — it can inform you, not answer the
 prompt for you. Toggle the warning sound from the "Warnton bei Rückfragen"
-checkbox in the plasmoid; the popup itself always shows.
+checkbox in the plasmoid; the popup itself always shows. Note `idle_prompt`
+can fire during any longer pause, not just when Claude is genuinely blocked —
+drop that matcher if it's too noisy.
+
+## Rate-limit quota
+
+KClaude does not show your account-wide 5h/weekly token quota or when it
+resets — that's a different question from "is this session waiting on me?"
+and already well covered by the
+[Claude Usage](https://store.kde.org/p/2331316) plasmoid (pure QML, reads
+your Claude Code OAuth session and calls the Anthropic usage API directly).
+Install that one alongside KClaude instead of expecting quota info here.
 
 ## Contributing
 

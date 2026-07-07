@@ -168,11 +168,6 @@ Item {
                             Layout.fillWidth: true
                         }
                     }
-                    PlasmaComponents.Label {
-                        visible: !!delegateRoot.sessionStatus && delegateRoot.sessionStatus.used_percentage !== undefined
-                        opacity: 0.7
-                        text: delegateRoot.sessionStatus ? (delegateRoot.sessionStatus.used_percentage + "%") : ""
-                    }
                     PlasmaComponents.ToolButton {
                         icon.name: "edit-delete"
                         onClicked: root.removeSession(index)
