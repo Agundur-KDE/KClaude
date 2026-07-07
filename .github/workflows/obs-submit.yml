@@ -6,6 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   submit:
     runs-on: ubuntu-latest
@@ -63,4 +66,47 @@ jobs:
         run: |
           set -euo pipefail
           cd obs-pkg
-          osc commit -m "Update to ${{ steps.ver.outputs.tag }}"
+          osc commit -m "Update to ${{ steps.ver.outputs.tag }}" || echo "nothing to commit, continuing"
+
+      - name: Force source service rerun
+        # A commit with no file changes (e.g. tag == already-configured revision)
+        # does not trigger OBS to re-run the obs_scm service on its own.
+        run: osc api -X POST "/source/home:Agundur/kclaude?cmd=runservice"
+
+      - name: Wait for OBS build to settle
+        run: |
+          set -euo pipefail
+          cd obs-pkg
+          for i in $(seq 1 60); do
+            out="$(osc results)"
+            echo "$out"
+            if ! grep -qE "broken|blocked|scheduled|building|dispatching|signing|finished\*" <<<"$out"; then
+              break
+            fi
+            sleep 20
+          done
+          echo "$out"
+          if grep -qE "failed|broken|unresolvable" <<<"$out"; then
+            echo "OBS build did not succeed, see log above" >&2
+            exit 1
+          fi
+
+      - name: Download RPMs
+        run: |
+          set -euo pipefail
+          cd obs-pkg
+          mkdir -p ../rpms
+          osc getbinaries openSUSE_Tumbleweed x86_64 -d ../rpms
+          osc getbinaries openSUSE_Tumbleweed i586 -d ../rpms
+          rm -f ../rpms/*.src.rpm ../rpms/_buildenv ../rpms/_statistics ../rpms/rpmlint.log
+          ls -la ../rpms
+
+      - name: Create or update GitHub Release with RPMs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.ver.outputs.tag }}"
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes
+          gh release upload "$TAG" rpms/*.rpm --repo "$GITHUB_REPOSITORY" --clobber
