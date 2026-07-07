@@ -106,11 +106,25 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download .deb artifact
         uses: actions/download-artifact@v4
         with:
           name: kclaude-trixie
           path: dist
+
+      - name: Build .plasmoid
+        # Pure QML since 0.2 — no compiling, just zip the package/ dir.
+        # GHNS-installable directly, no kpackagetool6 needed even.
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/.*"Version": "\(.*\)".*/\1/p' package/metadata.json)
+          cd package
+          zip -r "../dist/kclaude-${version}.plasmoid" metadata.json contents/
+          cd ..
+          ls -la dist/*.plasmoid
 
       - name: Create or update GitHub Release
         env:
@@ -120,4 +134,4 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
             || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes
-          gh release upload "$TAG" dist/dist/*.deb --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$TAG" dist/dist/*.deb dist/*.plasmoid --repo "$GITHUB_REPOSITORY" --clobber
