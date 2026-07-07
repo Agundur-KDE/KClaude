@@ -54,9 +54,14 @@ jobs:
       - name: Checkout OBS package
         run: osc checkout home:Agundur/kclaude -o obs-pkg
 
-      - name: Bump _service revision and spec version
+      - name: Sync spec from repo and bump _service revision
+        # The spec in obs-pkg/ is a separate copy OBS keeps — it does not
+        # auto-update just because packaging/kclaude.spec changed in git.
+        # Copy the current one from the checkout instead of only sed-bumping
+        # the version on a possibly stale file.
         run: |
           set -euo pipefail
+          cp packaging/kclaude.spec obs-pkg/kclaude.spec
           cd obs-pkg
           sed -i "s#<param name=\"revision\">.*</param>#<param name=\"revision\">${{ steps.ver.outputs.tag }}</param>#" _service
           sed -i "s/^Version:.*/Version:        ${{ steps.ver.outputs.version }}/" kclaude.spec
