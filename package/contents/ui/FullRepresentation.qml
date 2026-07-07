@@ -132,7 +132,7 @@ Item {
             }
 
             PlasmaComponents.CheckBox {
-                text: i18n("Warnton bei Rückfragen")
+                text: i18n("Warning sound on prompts")
                 checked: root.soundEnabled
                 onToggled: root.setSoundEnabled(checked)
             }
@@ -147,8 +147,7 @@ Item {
 
         PlasmaComponents.Label {
             visible: !!root.quota.five_hour || !!root.quota.seven_day
-            opacity: 0.7
-            font.pointSize: Kirigami.Theme.smallFont.pointSize
+            opacity: 0.85
             text: i18n("5h: %1% (Reset %2)   ·   7d: %3% (Reset %4)",
                 root.quota.five_hour ? root.quota.five_hour.used_percentage : "?",
                 root.quota.five_hour ? root.formatResetTime(root.quota.five_hour.resets_at) : "?",

@@ -8,11 +8,47 @@ msgstr ""
 "Project-Id-Version: plasma_applet_de.agundur.kclaude\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-01-01 00:00+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2026-07-07 00:00+0000\n"
+"Last-Translator: Alec S. <scholz@agundur.de>\n"
 "Language-Team: German\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "KClaude Sessions"
+msgstr "KClaude-Sitzungen"
+
+msgid "Warning sound on prompts"
+msgstr "Warnton bei Rückfragen"
+
+msgid "Region screenshot to clipboard"
+msgstr "Bildschirmausschnitt in Zwischenablage"
+
+msgid "5h: %1% (Reset %2)   ·   7d: %3% (Reset %4)"
+msgstr "5 Std.: %1 % (Reset %2)   ·   7 Tage: %3 % (Reset %4)"
+
+msgid "No sessions saved yet."
+msgstr "Noch keine Sitzungen gespeichert."
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Description (optional)"
+msgstr "Beschreibung (optional)"
+
+msgid "Directory, e.g. /home/alec/projects/KClaude"
+msgstr "Verzeichnis, z. B. /home/alec/projects/KClaude"
+
+msgid "Session ID (from claude --resume)"
+msgstr "Sitzungs-ID (von claude --resume)"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Add session"
+msgstr "Sitzung hinzufügen"
