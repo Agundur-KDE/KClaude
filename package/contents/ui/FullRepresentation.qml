@@ -112,6 +112,13 @@ Item {
                 checked: root.soundEnabled
                 onToggled: root.setSoundEnabled(checked)
             }
+
+            PlasmaComponents.ToolButton {
+                icon.name: "accessories-screenshot-tool"
+                text: i18n("Region screenshot to clipboard")
+                display: PlasmaComponents.ToolButton.IconOnly
+                onClicked: executable.connectSource("spectacle -r -b -n -c")
+            }
         }
 
         ListView {
