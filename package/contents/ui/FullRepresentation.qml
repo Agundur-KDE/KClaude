@@ -7,7 +7,6 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components 3.0 as PlasmaComponents
 import org.kde.plasma.plasma5support as Plasma5Support
-import de.agundur.kclaude
 import "ShellQuote.js" as ShellQuote
 
 Item {
@@ -20,88 +19,90 @@ Item {
     property bool addingSession: false
     property bool soundEnabled: true
 
-    // ponytail: JSON file instead of KConfig — sessions are a list of objects,
-    // kcfg has no clean way to store that; a flat file + FileReader does.
-    FileReader {
-        id: store
-        path: "~/.config/kclaude/sessions.json"
-        onContentChanged: root.reload()
-    }
-
-    // Written by claude-notify.sh/claude-running.sh (per-session running/waiting).
-    FileReader {
-        id: statusStore
-        path: "~/.config/kclaude/status.json"
-        onContentChanged: {
-            try {
-                root.status = statusStore.content ? JSON.parse(statusStore.content) : ({})
-            } catch (e) {
-                root.status = ({})
-            }
-        }
-    }
-
-    // Written by claude-statusline.sh: account-wide rate-limit quota
-    // (5h/7d window, NOT per-session context window).
-    FileReader {
-        id: quotaStore
-        path: "~/.config/kclaude/quota.json"
-        onContentChanged: {
-            try {
-                root.quota = quotaStore.content ? JSON.parse(quotaStore.content) : ({})
-            } catch (e) {
-                root.quota = ({})
-            }
-        }
-    }
-
-    function formatResetTime(epochSeconds) {
-        if (!epochSeconds) return "?"
-        const d = new Date(epochSeconds * 1000)
-        const pad = n => n.toString().padStart(2, "0")
-        const today = new Date()
-        const time = pad(d.getHours()) + ":" + pad(d.getMinutes())
-        if (d.toDateString() === today.toDateString()) return time
-        return pad(d.getDate()) + "." + pad(d.getMonth() + 1) + ". " + time
-    }
-
-    // Same toggle the claude-notify.sh Notification hook reads before playing a sound.
-    FileReader {
-        id: notifyStore
-        path: "~/.config/kclaude/notify.json"
-        onContentChanged: {
-            try {
-                root.soundEnabled = notifyStore.content ? (JSON.parse(notifyStore.content).sound !== false) : true
-            } catch (e) {
-                root.soundEnabled = true
-            }
-        }
-    }
-
-    function setSoundEnabled(enabled) {
-        soundEnabled = enabled
-        notifyStore.write(JSON.stringify({ sound: enabled }))
-    }
-
-    // ponytail: no C++ process launcher needed — the executable dataengine
-    // is the standard Plasma way to run a shell command from QML.
+    // ponytail: no C++ file-IO plugin — read/write via the same executable
+    // dataengine already used for launching sessions, so the plasmoid stays
+    // pure QML (GHNS-installable, no compiled plugin to build).
+    // QML's XMLHttpRequest can't read local files without a global env var
+    // (QML_XHR_ALLOW_FILE_READ) we have no way to set for a panel widget —
+    // verified empirically, not assumed. `cat`/shell redirection has no such
+    // restriction and reuses infrastructure already proven to work here.
     Plasma5Support.DataSource {
         id: executable
         engine: "executable"
         connectedSources: []
-        onNewData: (sourceName, data) => disconnectSource(sourceName)
-    }
-
-    function reload() {
-        try {
-            sessions = store.content ? JSON.parse(store.content) : []
-        } catch (e) {
-            sessions = []
+        property var pending: ({})
+        onNewData: (sourceName, data) => {
+            disconnectSource(sourceName)
+            const callback = pending[sourceName]
+            delete pending[sourceName]
+            if (callback)
+                callback(data)
         }
     }
 
+    function runCommand(cmd, callback) {
+        executable.pending[cmd] = callback || null
+        executable.connectSource(cmd)
+    }
+
+    function readFile(path, callback) {
+        runCommand("cat " + path, function(data) {
+            callback(data["exit code"] === 0 ? data.stdout : "")
+        })
+    }
+
+    function writeFile(path, content) {
+        runCommand("mkdir -p ~/.config/kclaude && printf '%s' " +
+            ShellQuote.shellQuote(content) + " > " + path)
+    }
+
+    function reload() {
+        readFile("~/.config/kclaude/sessions.json", function(text) {
+            try {
+                root.sessions = text ? JSON.parse(text) : []
+            } catch (e) {
+                root.sessions = []
+            }
+        })
+    }
+
     function persist() {
-        store.write(JSON.stringify(sessions))
+        writeFile("~/.config/kclaude/sessions.json", JSON.stringify(sessions))
+    }
+
+    function reloadStatus() {
+        readFile("~/.config/kclaude/status.json", function(text) {
+            try {
+                root.status = text ? JSON.parse(text) : ({})
+            } catch (e) {
+                root.status = ({})
+            }
+        })
+    }
+
+    function reloadQuota() {
+        readFile("~/.config/kclaude/quota.json", function(text) {
+            try {
+                root.quota = text ? JSON.parse(text) : ({})
+            } catch (e) {
+                root.quota = ({})
+            }
+        })
+    }
+
+    function reloadNotify() {
+        readFile("~/.config/kclaude/notify.json", function(text) {
+            try {
+                root.soundEnabled = text ? (JSON.parse(text).sound !== false) : true
+            } catch (e) {
+                root.soundEnabled = true
+            }
+        })
+    }
+
+    function setSoundEnabled(enabled) {
+        soundEnabled = enabled
+        writeFile("~/.config/kclaude/notify.json", JSON.stringify({ sound: enabled }))
     }
 
     function removeSession(index) {
@@ -115,6 +116,35 @@ Item {
         const cmd = "konsole --workdir " + ShellQuote.shellQuote(session.directory) +
             " -e claude --resume " + ShellQuote.shellQuote(session.sessionId)
         executable.connectSource(cmd)
+    }
+
+    function formatResetTime(epochSeconds) {
+        if (!epochSeconds) return "?"
+        const d = new Date(epochSeconds * 1000)
+        const pad = n => n.toString().padStart(2, "0")
+        const today = new Date()
+        const time = pad(d.getHours()) + ":" + pad(d.getMinutes())
+        if (d.toDateString() === today.toDateString()) return time
+        return pad(d.getDate()) + "." + pad(d.getMonth() + 1) + ". " + time
+    }
+
+    Component.onCompleted: {
+        reload()
+        reloadNotify()
+    }
+
+    // status.json/quota.json are written by external Claude Code hook
+    // scripts — poll instead of the instant push a file watcher would give,
+    // since pure QML has no cross-process file-change notification.
+    Timer {
+        interval: 2000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            root.reloadStatus()
+            root.reloadQuota()
+        }
     }
 
     ColumnLayout {

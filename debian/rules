@@ -14,11 +14,6 @@ override_dh_auto_configure:
 override_dh_auto_test:
 	:
 
-override_dh_auto_install:
-	dh_auto_install
-	# don't ship the bundled plugin sources in the binary package
-	rm -f debian/kclaude/usr/share/plasma/plasmoids/de.agundur.kclaude/plugin/*.{cpp,h,CMakeLists.txt} || true
-
 override_dh_auto_clean:
 	rm -rf obj-* build || true
 	dh_auto_clean || true

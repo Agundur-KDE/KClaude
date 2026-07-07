@@ -69,21 +69,13 @@ fi
 
 %files
 %doc README.md
-%dir %{_qt6_qmldir}/de
-%dir %{_qt6_qmldir}/de/agundur
-%{_qt6_qmldir}/de/agundur/kclaude/
 %dir %{_datadir}/plasma/plasmoids/de.agundur.kclaude
-%{_datadir}/plasma/plasmoids/de.agundur.kclaude/CMakeLists.txt
 %dir %{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents
 %dir %{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents/ui
 %{_datadir}/plasma/plasmoids/de.agundur.kclaude/metadata.json
 %{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents/ui/main.qml
 %{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents/ui/FullRepresentation.qml
 %{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents/ui/ShellQuote.js
-%dir %{_datadir}/plasma/plasmoids/de.agundur.kclaude/plugin
-%{_datadir}/plasma/plasmoids/de.agundur.kclaude/plugin/CMakeLists.txt
-%{_datadir}/plasma/plasmoids/de.agundur.kclaude/plugin/FileReader.cpp
-%{_datadir}/plasma/plasmoids/de.agundur.kclaude/plugin/FileReader.h
 %{_datadir}/icons/hicolor/*/apps/kclaude.png
 %{_datadir}/locale/*/LC_MESSAGES/plasma_applet_de.agundur.kclaude.mo
 

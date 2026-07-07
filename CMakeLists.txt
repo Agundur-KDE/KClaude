@@ -13,14 +13,10 @@ set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 include(KDEInstallDirs)
 include(KDECMakeSettings)
 include(KDECompilerSettings NO_POLICY_SCOPE)
-include(ECMFindQmlModule)
-include(ECMQmlModule)
 include(ECMAddTests)
 include(ECMInstallIcons)
 
 find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
-    Core
-    Quick
     Test
     QuickTest
 )
@@ -51,7 +47,6 @@ ecm_install_icons(
     DESTINATION ${KDE_INSTALL_ICONDIR}
 )
 
-add_subdirectory(package)
 add_subdirectory(tests)
 
 install(
