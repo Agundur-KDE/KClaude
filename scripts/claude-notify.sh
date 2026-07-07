@@ -8,10 +8,25 @@
 set -euo pipefail
 
 config="$HOME/.config/kclaude/notify.json"
+status_file="$HOME/.config/kclaude/status.json"
+lock_file="$status_file.lock"
 input="$(cat)"
 
 title="$(jq -r '.title // "Claude Code"' <<<"$input")"
 message="$(jq -r '.message // "Claude braucht deine Eingabe"' <<<"$input")"
+session_id="$(jq -r '.session_id // empty' <<<"$input")"
+
+if [[ -n "$session_id" ]]; then
+    mkdir -p "$(dirname "$status_file")"
+    [[ -f "$status_file" ]] || echo '{}' >"$status_file"
+
+    exec 9>"$lock_file"
+    flock 9
+    tmp="$(mktemp)"
+    jq --arg sid "$session_id" '.[$sid] = ((.[$sid] // {}) + {state: "waiting"})' "$status_file" >"$tmp"
+    cat "$tmp" >"$status_file"
+    rm -f "$tmp"
+fi
 
 sound_enabled=true
 if [[ -f "$config" ]]; then

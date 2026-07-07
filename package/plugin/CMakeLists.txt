@@ -1,5 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml Widgets)
-find_package(KF6 REQUIRED COMPONENTS Parts)
+find_package(Qt6 REQUIRED COMPONENTS Core Qml)
 
 include(ECMQmlModule)
 
@@ -11,9 +10,8 @@ ecm_add_qml_module(kclaudeplugin
 
 target_sources(kclaudeplugin PRIVATE
     FileReader.cpp FileReader.h
-    TerminalHost.cpp TerminalHost.h
 )
 
-target_link_libraries(kclaudeplugin PRIVATE Qt6::Core Qt6::Qml Qt6::Widgets KF6::Parts)
+target_link_libraries(kclaudeplugin PRIVATE Qt6::Core Qt6::Qml)
 
 ecm_finalize_qml_module(kclaudeplugin)

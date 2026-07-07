@@ -4,9 +4,9 @@
  */
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Window as Window
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components 3.0 as PlasmaComponents
+import org.kde.plasma.plasma5support as Plasma5Support
 import de.agundur.kclaude
 import "ShellQuote.js" as ShellQuote
 
@@ -15,7 +15,7 @@ Item {
     anchors.fill: parent
 
     property var sessions: []
-    property bool terminalActive: false
+    property var status: ({})
     property bool addingSession: false
     property bool soundEnabled: true
 
@@ -25,6 +25,20 @@ Item {
         id: store
         path: "~/.config/kclaude/sessions.json"
         onContentChanged: root.reload()
+    }
+
+    // Written by scripts/claude-notify.sh (state) and claude-statusline.sh
+    // (context_used_pct) — see README "Live status" section.
+    FileReader {
+        id: statusStore
+        path: "~/.config/kclaude/status.json"
+        onContentChanged: {
+            try {
+                root.status = statusStore.content ? JSON.parse(statusStore.content) : ({})
+            } catch (e) {
+                root.status = ({})
+            }
+        }
     }
 
     // Same toggle the claude-notify.sh Notification hook reads before playing a sound.
@@ -45,8 +59,13 @@ Item {
         notifyStore.write(JSON.stringify({ sound: enabled }))
     }
 
-    TerminalHost {
-        id: terminal
+    // ponytail: no C++ process launcher needed — the executable dataengine
+    // is the standard Plasma way to run a shell command from QML.
+    Plasma5Support.DataSource {
+        id: executable
+        engine: "executable"
+        connectedSources: []
+        onNewData: (sourceName, data) => disconnectSource(sourceName)
     }
 
     function reload() {
@@ -69,15 +88,15 @@ Item {
     }
 
     function launch(session) {
-        terminalActive = true
-        terminal.runInDirectory(session.directory, "claude --resume " + ShellQuote.shellQuote(session.sessionId))
+        const cmd = "konsole --workdir " + ShellQuote.shellQuote(session.directory) +
+            " -e claude --resume " + ShellQuote.shellQuote(session.sessionId)
+        executable.connectSource(cmd)
     }
 
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Kirigami.Units.largeSpacing
         spacing: Kirigami.Units.smallSpacing
-        visible: !root.terminalActive
 
         RowLayout {
             Layout.fillWidth: true
@@ -111,10 +130,21 @@ Item {
             }
 
             delegate: PlasmaComponents.ItemDelegate {
+                id: delegateRoot
                 width: ListView.view.width
                 onClicked: root.launch(modelData)
 
+                readonly property var sessionStatus: root.status[modelData.sessionId]
+
                 contentItem: RowLayout {
+                    Rectangle {
+                        Layout.preferredWidth: Kirigami.Units.smallSpacing * 1.5
+                        Layout.preferredHeight: Layout.preferredWidth
+                        radius: width / 2
+                        color: !delegateRoot.sessionStatus ? "transparent"
+                            : delegateRoot.sessionStatus.state === "waiting" ? "orange"
+                            : "green"
+                    }
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 0
@@ -130,6 +160,11 @@ Item {
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
+                    }
+                    PlasmaComponents.Label {
+                        visible: !!delegateRoot.sessionStatus && delegateRoot.sessionStatus.used_percentage !== undefined
+                        opacity: 0.7
+                        text: delegateRoot.sessionStatus ? (delegateRoot.sessionStatus.used_percentage + "%") : ""
                     }
                     PlasmaComponents.ToolButton {
                         icon.name: "edit-delete"
@@ -202,35 +237,4 @@ Item {
             }
         }
     }
-
-    ColumnLayout {
-        anchors.fill: parent
-        visible: root.terminalActive
-        spacing: 0
-
-        PlasmaComponents.ToolButton {
-            icon.name: "go-previous"
-            text: i18n("Back to sessions")
-            // Only hides the embedded terminal — the shell (and whatever runs in
-            // it) keeps running in the background, nothing gets killed here.
-            onClicked: {
-                root.terminalActive = false
-                root.forceActiveFocus()
-                if (root.Window.window)
-                    root.Window.window.requestActivate()
-            }
-        }
-
-        Window.WindowContainer {
-            id: terminalContainer
-            window: terminal.window
-            focus: true
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-
-            Component.onCompleted: terminal.activate()
-        }
-    }
-
-    onTerminalActiveChanged: if (terminalActive) terminal.activate()
 }
