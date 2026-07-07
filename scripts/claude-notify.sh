@@ -42,4 +42,4 @@ fi
 gdbus call --session --dest org.freedesktop.Notifications \
     --object-path /org/freedesktop/Notifications \
     --method org.freedesktop.Notifications.Notify \
-    "KClaude" 0 "utilities-terminal" "$title" "$message" "[]" "{}" 8000 >/dev/null
+    "KClaude" 0 "kclaude" "$title" "$message" "[]" "{}" 8000 >/dev/null
