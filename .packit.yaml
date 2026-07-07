@@ -1,0 +1,16 @@
+specfile_path: packaging/kclaude.spec
+downstream_package_name: kclaude
+upstream_tag_template: "v{version}"
+
+actions:
+  create-archive:
+    - bash -lc 'VER=$(git describe --tags --abbrev=0 | sed "s/^v//"); git archive --format=tar --prefix=KClaude-$VER/ v$VER | gzip -9 > KClaude-$VER.tar.gz && echo KClaude-$VER.tar.gz'
+  get-current-version:
+    - bash -lc "git describe --tags --abbrev=0 | sed 's/^v//'"
+
+jobs:
+  - job: copr_build
+    trigger: release           # only new tags/releases
+    owner: agundur
+    project: KClaude
+    targets: ["fedora-44-x86_64", "fedora-rawhide-x86_64"]
