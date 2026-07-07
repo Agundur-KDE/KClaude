@@ -132,15 +132,14 @@ Item {
             }
 
             PlasmaComponents.CheckBox {
+                id: soundCheckbox
                 text: i18n("Warning sound on prompts")
                 checked: root.soundEnabled
                 onToggled: root.setSoundEnabled(checked)
             }
 
             Kirigami.Separator {
-                Layout.fillHeight: true
-                Layout.topMargin: Kirigami.Units.smallSpacing
-                Layout.bottomMargin: Kirigami.Units.smallSpacing
+                Layout.preferredHeight: soundCheckbox.height * 0.7
             }
 
             PlasmaComponents.ToolButton {
