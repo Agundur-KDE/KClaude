@@ -73,6 +73,7 @@ fi
 %dir %{_qt6_qmldir}/de/agundur
 %{_qt6_qmldir}/de/agundur/kclaude/
 %dir %{_datadir}/plasma/plasmoids/de.agundur.kclaude
+%{_datadir}/plasma/plasmoids/de.agundur.kclaude/CMakeLists.txt
 %dir %{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents
 %dir %{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents/ui
 %{_datadir}/plasma/plasmoids/de.agundur.kclaude/metadata.json
