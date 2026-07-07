@@ -1,8 +1,17 @@
 <div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="icons/256-apps-kclaude.png">
+    <img src="screenshots/logo.png" width="128" alt="KClaude logo">
+  </picture>
   <h1>KClaude</h1>
   <p>KDE Plasma 6 panel widget for Claude Code: save sessions, resume them<br>
   in a terminal, see at a glance which ones are waiting on you.</p>
 </div>
+
+<p align="center">
+  <img src="screenshots/sessions.png" width="45%" alt="Session list with live status and rate-limit quota">
+  <img src="screenshots/add-session.png" width="45%" alt="Add-session form">
+</p>
 
 ## What it does
 
@@ -104,7 +113,7 @@ Add to `~/.claude/settings.json`:
   pass-through call at the bottom of the script.
 
 The `Notification` hook is fire-and-forget — it can inform you, not answer the
-prompt for you. Toggle the warning sound from the "Warnton bei Rückfragen"
+prompt for you. Toggle the warning sound from the "Warning sound on prompts"
 checkbox in the plasmoid; the popup itself always shows. Note `idle_prompt`
 can fire during any longer pause, not just when Claude is genuinely blocked —
 drop that matcher if it's too noisy.
