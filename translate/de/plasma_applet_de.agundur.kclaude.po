@@ -26,6 +26,9 @@ msgstr "Warnton bei Rückfragen"
 msgid "Region screenshot to clipboard"
 msgstr "Bildschirmausschnitt in Zwischenablage"
 
+msgid "Screenshot a region → clipboard. Paste with Ctrl+V, e.g. into the Claude Code terminal."
+msgstr "Bildschirmausschnitt → Zwischenablage. Mit Strg+V einfügen, z. B. ins Claude-Code-Terminal."
+
 msgid "5h: %1% (Reset %2)   ·   7d: %3% (Reset %4)"
 msgstr "5 Std.: %1 % (Reset %2)   ·   7 Tage: %3 % (Reset %4)"
 

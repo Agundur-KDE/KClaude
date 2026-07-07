@@ -137,11 +137,20 @@ Item {
                 onToggled: root.setSoundEnabled(checked)
             }
 
+            Kirigami.Separator {
+                Layout.fillHeight: true
+                Layout.topMargin: Kirigami.Units.smallSpacing
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
+            }
+
             PlasmaComponents.ToolButton {
                 icon.name: "accessories-screenshot-tool"
                 text: i18n("Region screenshot to clipboard")
                 display: PlasmaComponents.ToolButton.IconOnly
                 onClicked: executable.connectSource("spectacle -r -b -n -c")
+
+                PlasmaComponents.ToolTip.visible: hovered
+                PlasmaComponents.ToolTip.text: i18n("Screenshot a region → clipboard. Paste with Ctrl+V, e.g. into the Claude Code terminal.")
             }
         }
 
