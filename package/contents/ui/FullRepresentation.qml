@@ -16,6 +16,7 @@ Item {
 
     property var sessions: []
     property var status: ({})
+    property var quota: ({})
     property bool addingSession: false
     property bool soundEnabled: true
 
@@ -27,8 +28,7 @@ Item {
         onContentChanged: root.reload()
     }
 
-    // Written by scripts/claude-notify.sh (state) and claude-statusline.sh
-    // (context_used_pct) — see README "Live status" section.
+    // Written by claude-notify.sh/claude-running.sh (per-session running/waiting).
     FileReader {
         id: statusStore
         path: "~/.config/kclaude/status.json"
@@ -39,6 +39,30 @@ Item {
                 root.status = ({})
             }
         }
+    }
+
+    // Written by claude-statusline.sh: account-wide rate-limit quota
+    // (5h/7d window, NOT per-session context window).
+    FileReader {
+        id: quotaStore
+        path: "~/.config/kclaude/quota.json"
+        onContentChanged: {
+            try {
+                root.quota = quotaStore.content ? JSON.parse(quotaStore.content) : ({})
+            } catch (e) {
+                root.quota = ({})
+            }
+        }
+    }
+
+    function formatResetTime(epochSeconds) {
+        if (!epochSeconds) return "?"
+        const d = new Date(epochSeconds * 1000)
+        const pad = n => n.toString().padStart(2, "0")
+        const today = new Date()
+        const time = pad(d.getHours()) + ":" + pad(d.getMinutes())
+        if (d.toDateString() === today.toDateString()) return time
+        return pad(d.getDate()) + "." + pad(d.getMonth() + 1) + ". " + time
     }
 
     // Same toggle the claude-notify.sh Notification hook reads before playing a sound.
@@ -119,6 +143,17 @@ Item {
                 display: PlasmaComponents.ToolButton.IconOnly
                 onClicked: executable.connectSource("spectacle -r -b -n -c")
             }
+        }
+
+        PlasmaComponents.Label {
+            visible: !!root.quota.five_hour || !!root.quota.seven_day
+            opacity: 0.7
+            font.pointSize: Kirigami.Theme.smallFont.pointSize
+            text: i18n("5h: %1% (Reset %2)   ·   7d: %3% (Reset %4)",
+                root.quota.five_hour ? root.quota.five_hour.used_percentage : "?",
+                root.quota.five_hour ? root.formatResetTime(root.quota.five_hour.resets_at) : "?",
+                root.quota.seven_day ? root.quota.seven_day.used_percentage : "?",
+                root.quota.seven_day ? root.formatResetTime(root.quota.seven_day.resets_at) : "?")
         }
 
         ListView {
