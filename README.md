@@ -55,6 +55,18 @@ sudo zypper install cmake extra-cmake-modules kf6-ki18n-devel \
 
 ## Build & install
 
+On openSUSE Tumbleweed, the easiest way is the RPM from our repo:
+```bash
+sudo zypper ar -f https://download.opensuse.org/repositories/home:/Agundur/openSUSE_Tumbleweed/home:Agundur.repo
+sudo zypper --gpg-auto-import-keys ref
+sudo zypper in kclaude
+```
+
+Debian/Ubuntu: grab the `.deb` from the [latest release](https://github.com/Agundur-KDE/KClaude/releases/latest).
+
+Not GHNS-installable ("Get New Widgets") — it ships a small compiled C++
+plugin, which GHNS can't build for you. Building from source works
+everywhere else:
 ```bash
 git clone git@github.com:Agundur-KDE/KClaude.git
 cd KClaude
