@@ -1,0 +1,66 @@
+name: obs-submit
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Determine version from tag
+        id: ver
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Install osc
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends osc
+
+      - name: Configure osc credentials
+        env:
+          OBS_USER: ${{ secrets.OBS_USER }}
+          OBS_PASSWORD: ${{ secrets.OBS_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.config/osc
+          cat > ~/.config/osc/oscrc <<OSCRC
+          [general]
+          apiurl = https://api.opensuse.org
+
+          [https://api.opensuse.org]
+          user = ${OBS_USER}
+          pass = ${OBS_PASSWORD}
+          credentials_mgr_class = osc.credentials.PlaintextConfigFileCredentialsManager
+          OSCRC
+          chmod 600 ~/.config/osc/oscrc
+
+      - name: Checkout OBS package
+        run: osc checkout home:Agundur/kclaude -o obs-pkg
+
+      - name: Bump _service revision and spec version
+        run: |
+          set -euo pipefail
+          cd obs-pkg
+          sed -i "s#<param name=\"revision\">.*</param>#<param name=\"revision\">${{ steps.ver.outputs.tag }}</param>#" _service
+          sed -i "s/^Version:.*/Version:        ${{ steps.ver.outputs.version }}/" kclaude.spec
+          cat _service
+
+      - name: Commit to OBS
+        run: |
+          set -euo pipefail
+          cd obs-pkg
+          osc commit -m "Update to ${{ steps.ver.outputs.tag }}"
