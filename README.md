@@ -44,49 +44,42 @@ reach into the panel widget at all.
 
 ## Requirements
 
-- Qt ≥ 6.7, KDE Frameworks ≥ 6.10, CMake ≥ 3.16, Extra CMake Modules
-- `konsole`, `gdbus`, `paplay`, `jq` — for launching sessions and the notification/status hooks
+Pure QML, no compiled plugin — Qt ≥ 6.7 and KDE Frameworks ≥ 6.10 (whatever
+your Plasma 6 install already has) is all you need at runtime.
+`konsole`, `gdbus`, `paplay`, `jq`, `spectacle` — for launching sessions and
+the notification/status hooks.
 
-On openSUSE Tumbleweed:
+## Install
+
+Easiest: **"Get New Widgets"** in System Settings, or grab the `.plasmoid`
+from the [latest release](https://github.com/Agundur-KDE/KClaude/releases/latest)
+and:
 ```bash
-sudo zypper install cmake extra-cmake-modules kf6-ki18n-devel \
-     qt6-quick-devel qt6-test-devel
+kpackagetool6 --type Plasma/Applet --install kclaude-*.plasmoid
 ```
 
-## Build & install
-
-On openSUSE Tumbleweed, the easiest way is the RPM from our repo:
+Also available as a proper package, if you'd rather have `zypper`/`apt`
+manage updates:
 ```bash
+# openSUSE Tumbleweed
 sudo zypper ar -f https://download.opensuse.org/repositories/home:/Agundur/openSUSE_Tumbleweed/home:Agundur.repo
 sudo zypper --gpg-auto-import-keys ref
 sudo zypper in kclaude
+
+# Debian/Ubuntu — grab the .deb from the latest release above
 ```
 
-Debian/Ubuntu: grab the `.deb` from the [latest release](https://github.com/Agundur-KDE/KClaude/releases/latest).
-
-Not GHNS-installable ("Get New Widgets") — it ships a small compiled C++
-plugin, which GHNS can't build for you. Building from source works
-everywhere else:
+Or straight from source, no build step needed either:
 ```bash
 git clone git@github.com:Agundur-KDE/KClaude.git
-cd KClaude
+kpackagetool6 --type Plasma/Applet --install KClaude/package/
+```
+
+## Development: running the test suite
+
+Only needed if you're contributing — regular use needs no build step at all.
+```bash
 mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-sudo make install
-```
-
-## Try it without installing
-
-```bash
-kpackagetool6 --type Plasma/Applet --install package/
-QML_IMPORT_PATH=build/bin QT_QPA_PLATFORM=xcb plasmoidviewer -a de.agundur.kclaude
-```
-
-## Test
-
-```bash
-cd build
 cmake .. -DCMAKE_BUILD_TYPE=Debug
 make tst_plasmoid
 ctest --output-on-failure
