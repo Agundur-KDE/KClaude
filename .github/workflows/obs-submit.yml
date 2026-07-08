@@ -68,10 +68,20 @@ jobs:
           cat _service
 
       - name: Commit to OBS
+        # osc exits non-zero for a genuine no-op commit too (same tag already
+        # submitted, needs -f to force an empty commit) — that case is fine to
+        # swallow. A real API error (e.g. transient 5xx) also exits non-zero
+        # and looks the same unless we check the actual output for it.
         run: |
           set -euo pipefail
           cd obs-pkg
-          osc commit -m "Update to ${{ steps.ver.outputs.tag }}" || echo "nothing to commit, continuing"
+          if ! osc commit -m "Update to ${{ steps.ver.outputs.tag }}" 2>&1 | tee /tmp/osc-commit.log; then
+            if grep -qE "Server returned an error|HTTP Error" /tmp/osc-commit.log; then
+              echo "osc commit failed against the OBS API, see log above" >&2
+              exit 1
+            fi
+            echo "nothing to commit, continuing"
+          fi
 
       - name: Force source service rerun
         # A commit with no file changes (e.g. tag == already-configured revision)
