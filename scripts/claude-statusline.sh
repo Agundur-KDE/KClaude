@@ -22,14 +22,13 @@ if [[ -n "$five_hour_pct" || -n "$seven_day_pct" ]]; then
 
     exec 9>"$lock_file"
     flock 9
-    tmp="$(mktemp)"
+    tmp="$(mktemp "${quota_file}.XXXXXX")"
     jq -n \
         --argjson fp "${five_hour_pct:-null}" --argjson fr "${five_hour_reset:-null}" \
         --argjson sp "${seven_day_pct:-null}" --argjson sr "${seven_day_reset:-null}" \
         '{five_hour: {used_percentage: $fp, resets_at: $fr}, seven_day: {used_percentage: $sp, resets_at: $sr}}' \
         >"$tmp"
-    cat "$tmp" >"$quota_file"
-    rm -f "$tmp"
+    mv "$tmp" "$quota_file"
 fi
 
 # ponytail: version dir in the ponytail plugin path changes on updates, glob for it.

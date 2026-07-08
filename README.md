@@ -52,6 +52,9 @@ your Plasma 6 install already has) is all you need at runtime.
 `konsole`, `gdbus`, `paplay`, `jq`, `spectacle` — for launching sessions and
 the notification/status hooks.
 
+UI is translated into German, Spanish and French (falls back to English
+otherwise) — see `translate/`.
+
 ## Install
 
 Easiest: **"Get New Widgets"** in System Settings, or grab the `.plasmoid`

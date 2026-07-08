@@ -16,7 +16,6 @@ mkdir -p "$(dirname "$status_file")"
 
 exec 9>"$lock_file"
 flock 9
-tmp="$(mktemp)"
+tmp="$(mktemp "${status_file}.XXXXXX")"
 jq --arg sid "$session_id" '.[$sid] = ((.[$sid] // {}) + {state: "running"})' "$status_file" >"$tmp"
-cat "$tmp" >"$status_file"
-rm -f "$tmp"
+mv "$tmp" "$status_file"
