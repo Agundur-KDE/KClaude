@@ -18,6 +18,9 @@
 - **Session launcher.** Save a name, description, working directory and
   `claude --resume` session ID. Click a saved session and KClaude spawns
   `konsole --workdir <dir> -e claude --resume <id>` for you.
+- **New session button.** Starts a fresh `claude` (no `--resume`) in a
+  configurable default directory — set it once via the ⚙ Settings icon.
+  `~` in the path expands to your home directory.
 - **Live status per session.** A colored dot next to each session shows
   whether Claude is running or waiting on you.
 - **Panel notifications.** `scripts/claude-notify.sh` hooks into Claude Code's
