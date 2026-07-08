@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Agundur <info@agundur.de>
  * SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
  */
+import QtCore
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
@@ -17,7 +18,10 @@ Item {
     property var status: ({})
     property var quota: ({})
     property bool addingSession: false
+    property bool showSettings: false
     property bool soundEnabled: true
+    property string defaultDir: ""
+    readonly property string homeDir: StandardPaths.standardLocations(StandardPaths.HomeLocation)[0] || ""
 
     // ponytail: no C++ file-IO plugin — read/write via the same executable
     // dataengine already used for launching sessions, so the plasmoid stays
@@ -105,6 +109,21 @@ Item {
         writeFile("~/.config/kclaude/notify.json", JSON.stringify({ sound: enabled }))
     }
 
+    function reloadSettings() {
+        readFile("~/.config/kclaude/settings.json", function(text) {
+            try {
+                root.defaultDir = text ? (JSON.parse(text).defaultDir || "") : ""
+            } catch (e) {
+                root.defaultDir = ""
+            }
+        })
+    }
+
+    function setDefaultDir(dir) {
+        defaultDir = dir
+        writeFile("~/.config/kclaude/settings.json", JSON.stringify({ defaultDir: dir }))
+    }
+
     function removeSession(index) {
         const copy = sessions.slice()
         copy.splice(index, 1)
@@ -112,9 +131,17 @@ Item {
         persist()
     }
 
+    function expandHome(dir) {
+        if (dir === "~") return root.homeDir || dir
+        if (dir.indexOf("~/") === 0 && root.homeDir) return root.homeDir + dir.slice(1)
+        return dir
+    }
+
     function launch(session) {
-        const cmd = "konsole --workdir " + ShellQuote.shellQuote(session.directory) +
-            " -e claude --resume " + ShellQuote.shellQuote(session.sessionId)
+        const dir = expandHome(session.directory)
+        let cmd = "konsole --workdir " + ShellQuote.shellQuote(dir) + " -e claude"
+        if (session.sessionId)
+            cmd += " --resume " + ShellQuote.shellQuote(session.sessionId)
         executable.connectSource(cmd)
     }
 
@@ -131,6 +158,7 @@ Item {
     Component.onCompleted: {
         reload()
         reloadNotify()
+        reloadSettings()
     }
 
     // status.json/quota.json are written by external Claude Code hook
@@ -181,6 +209,15 @@ Item {
                 PlasmaComponents.ToolTip.visible: hovered
                 PlasmaComponents.ToolTip.text: i18n("Screenshot a region → clipboard. Paste with Ctrl+V, e.g. into the Claude Code terminal.")
             }
+
+            PlasmaComponents.ToolButton {
+                icon.name: "configure"
+                text: i18n("Settings")
+                display: PlasmaComponents.ToolButton.IconOnly
+                checkable: true
+                checked: root.showSettings
+                onClicked: root.showSettings = !root.showSettings
+            }
         }
 
         PlasmaComponents.Label {
@@ -196,10 +233,11 @@ Item {
         ListView {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: !root.addingSession
+            visible: !root.addingSession && !root.showSettings
             model: root.sessions
             clip: true
             spacing: Kirigami.Units.smallSpacing
+            PlasmaComponents.ScrollBar.vertical: PlasmaComponents.ScrollBar {}
 
             PlasmaComponents.Label {
                 anchors.centerIn: parent
@@ -251,7 +289,36 @@ Item {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: root.addingSession
+            visible: root.showSettings
+            spacing: Kirigami.Units.smallSpacing
+
+            PlasmaComponents.Label {
+                text: i18n("Default directory for \"New session\"")
+                opacity: 0.7
+            }
+            PlasmaComponents.TextField {
+                id: defaultDirField
+                Layout.fillWidth: true
+                placeholderText: i18n("e.g. ~/projects")
+                text: root.defaultDir
+            }
+            Item { Layout.fillHeight: true }
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                PlasmaComponents.Button {
+                    text: i18n("Save")
+                    onClicked: {
+                        root.setDefaultDir(defaultDirField.text)
+                        root.showSettings = false
+                    }
+                }
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: root.addingSession && !root.showSettings
             spacing: Kirigami.Units.smallSpacing
 
             PlasmaComponents.TextField {
@@ -267,7 +334,7 @@ Item {
             PlasmaComponents.TextField {
                 id: directoryField
                 Layout.fillWidth: true
-                placeholderText: i18n("Directory, e.g. /home/alec/projects/KClaude")
+                placeholderText: i18n("Directory, e.g. ~/projects/KClaude")
             }
             PlasmaComponents.TextField {
                 id: sessionIdField
@@ -279,6 +346,7 @@ Item {
 
         RowLayout {
             Layout.alignment: Qt.AlignRight
+            visible: !root.showSettings
 
             PlasmaComponents.Button {
                 text: i18n("Cancel")
@@ -303,6 +371,15 @@ Item {
                     sessionIdField.text = ""
                     root.addingSession = false
                 }
+            }
+            PlasmaComponents.Button {
+                text: i18n("New session")
+                visible: !root.addingSession
+                enabled: root.defaultDir.length > 0
+                onClicked: root.launch({ directory: root.defaultDir, sessionId: "" })
+
+                PlasmaComponents.ToolTip.visible: hovered && !enabled
+                PlasmaComponents.ToolTip.text: i18n("Set a default directory in Settings first.")
             }
             PlasmaComponents.Button {
                 text: i18n("Add session")

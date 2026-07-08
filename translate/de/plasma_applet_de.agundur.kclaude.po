@@ -41,8 +41,8 @@ msgstr "Name"
 msgid "Description (optional)"
 msgstr "Beschreibung (optional)"
 
-msgid "Directory, e.g. /home/alec/projects/KClaude"
-msgstr "Verzeichnis, z. B. /home/alec/projects/KClaude"
+msgid "Directory, e.g. ~/projects/KClaude"
+msgstr "Verzeichnis, z. B. ~/projects/KClaude"
 
 msgid "Session ID (from claude --resume)"
 msgstr "Sitzungs-ID (von claude --resume)"
@@ -55,3 +55,18 @@ msgstr "Speichern"
 
 msgid "Add session"
 msgstr "Sitzung hinzufügen"
+
+msgid "Settings"
+msgstr "Einstellungen"
+
+msgid "Default directory for \"New session\""
+msgstr "Standardverzeichnis für „Neue Sitzung“"
+
+msgid "e.g. ~/projects"
+msgstr "z. B. ~/projects"
+
+msgid "New session"
+msgstr "Neue Sitzung"
+
+msgid "Set a default directory in Settings first."
+msgstr "Zuerst ein Standardverzeichnis in den Einstellungen festlegen."

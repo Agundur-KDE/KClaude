@@ -1,3 +1,12 @@
+kclaude (0.3-1) unstable; urgency=medium
+
+  * Settings panel with a default directory for a new "New session" button
+    (starts Claude without --resume, ~ expands via QtCore StandardPaths).
+  * Visible scrollbar on the session list.
+  * New strings translated (de/es/fr).
+
+ -- Agundur <info@agundur.de>  Wed, 08 Jul 2026 12:00:00 +0200
+
 kclaude (0.2-1) unstable; urgency=medium
 
   * Pure QML now — no compiled plugin, no C++ build-deps needed at runtime.
