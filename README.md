@@ -6,6 +6,7 @@
   <h1>KClaude</h1>
   <p>KDE Plasma 6 panel widget for Claude Code: save sessions, resume them<br>
   in a terminal, see at a glance which ones are waiting on you.</p>
+  <p><a href="https://www.agundur.de/projects/kclaude.html">Project page</a></p>
 </div>
 
 <p align="center">
