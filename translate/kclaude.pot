@@ -1,116 +1,114 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
+# This file is distributed under the same license as the kclaude package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: plasma_applet_de.agundur.kclaude\n"
+"Project-Id-Version: kclaude\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-07-09 10:33+0200\n"
-"PO-Revision-Date: 2026-07-07 00:00+0000\n"
-"Last-Translator: Alec S. <scholz@agundur.de>\n"
-"Language-Team: Spanish\n"
-"Language: es\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: package/contents/ui/FullRepresentation.qml:233
 msgid "KClaude Sessions"
-msgstr "Sesiones de KClaude"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:240
 msgid "Warning sound on prompts"
-msgstr "Sonido de aviso en preguntas"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:251
 msgid "Region screenshot to clipboard"
-msgstr "Captura de región al portapapeles"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:256
 msgid ""
 "Screenshot a region → clipboard. Paste with Ctrl+V, e.g. into the Claude "
 "Code terminal."
-msgstr "Captura de una región → portapapeles. Pega con Ctrl+V, p. ej. en la terminal de Claude Code."
-"Captura una región → portapapeles. Pega con Ctrl+V, p. ej. en la terminal de "
-"Claude Code."
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:261
 msgid "Settings"
-msgstr "Ajustes"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:272
 msgid "5h: %1% (Reset %2)   ·   7d: %3% (Reset %4)"
-msgstr "5 h: %1 % (Reinicio %2)   ·   7 d: %3 % (Reinicio %4)"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:292
 msgid "No sessions saved yet."
-msgstr "Aún no hay sesiones guardadas."
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:305
 msgid ""
 "Claude Code already deleted this session's local transcript (older than %1 "
 "days) — resuming will start a fresh session instead."
-msgstr "Claude Code ya eliminó la transcripción local de esta sesión (más antigua que %1 días) — reanudar iniciará una sesión nueva en su lugar."
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:347
 msgid "Default directory for \"New session\""
-msgstr "Directorio predeterminado para «Nueva sesión»"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:353
 msgid "e.g. ~/projects"
-msgstr "p. ej. ~/projects"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:360
 msgid "Session retention (Claude Code setting, read-only)"
-msgstr "Retención de sesiones (ajuste de Claude Code, solo lectura)"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:364
 msgid ""
 "Claude Code keeps a session's local transcript for %1 days, then deletes it "
 "automatically — resuming an older one here starts fresh instead. Change "
 "cleanupPeriodDays in ~/.claude/settings.json if you want longer retention."
-msgstr "Claude Code conserva la transcripción local de una sesión durante %1 días y luego la elimina automáticamente — reanudar una sesión más antigua aquí inicia una nueva en su lugar. Cambia cleanupPeriodDays en ~/.claude/settings.json para una retención más larga."
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:375
 #: package/contents/ui/FullRepresentation.qml:423
 msgid "Save"
-msgstr "Guardar"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:393
 msgid "Name"
-msgstr "Nombre"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:398
 msgid "Description (optional)"
-msgstr "Descripción (opcional)"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:403
 msgid "Directory, e.g. ~/projects/KClaude"
-msgstr "Directorio, p. ej. ~/projects/KClaude"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:408
 msgid "Session ID (from claude --resume)"
-msgstr "ID de sesión (de claude --resume)"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:418
 msgid "Cancel"
-msgstr "Cancelar"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:442
 msgid "New session"
-msgstr "Nueva sesión"
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:448
 msgid "Set a default directory in Settings first."
-msgstr "Primero define un directorio predeterminado en Ajustes."
+msgstr ""
 
 #: package/contents/ui/FullRepresentation.qml:451
 msgid "Add session"
-msgstr "Añadir sesión"
+msgstr ""
 
 #: package/contents/ui/main.qml:16
 msgid "KClaude"
-msgstr "KClaude"
+msgstr ""

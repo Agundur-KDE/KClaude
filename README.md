@@ -35,6 +35,10 @@
   account-wide 5h/7d usage window (`used_percentage` + local reset time) —
   Claude.ai Pro/Max only. Not per-session, not rings/bars, just two numbers
   and two times. See "Rate-limit quota" below for how it's wired up.
+- **Expired-session greying.** A saved session whose local transcript
+  Claude Code has already deleted shows dimmed with a tooltip explaining
+  why — `--resume` would silently start a fresh conversation instead of
+  actually resuming. See "Session retention" below.
 
 Sessions persist to `~/.config/kclaude/sessions.json`, the sound toggle to
 `~/.config/kclaude/notify.json`, live status to `~/.config/kclaude/status.json`,
@@ -139,6 +143,25 @@ API calls of our own needed. If you want a fuller dashboard (rings/bars,
 per-model breakdown, more languages), the
 [Claude Usage](https://store.kde.org/p/2331316) plasmoid covers that in more
 depth and pairs fine alongside KClaude.
+
+## Session retention
+
+Claude Code keeps a session's local transcript (what `--resume` actually
+reads) for `cleanupPeriodDays` days — 30 by default — then deletes it
+automatically on its next startup, independent of anything KClaude does.
+The saved shortcut in KClaude's own `sessions.json` never expires on its
+own (delete it yourself via the 🗑 button), so without this feature a
+session could look perfectly fine in the list while `--resume` quietly
+starts a brand new conversation because the transcript is already gone.
+
+KClaude reads (never writes) `cleanupPeriodDays` from Claude Code's own
+`~/.claude/settings.json` — shown read-only in ⚙ Settings, since that file
+is shared with every other running Claude Code window and writing to it
+risks a lost-update race. For each saved session it checks whether
+`~/.claude/projects/<encoded-dir>/<session-id>.jsonl` still exists — more
+accurate than estimating from a saved date — and dims the entry with an
+explanatory tooltip if it's gone. Want longer retention? Set
+`cleanupPeriodDays` yourself in `~/.claude/settings.json`.
 
 ## Contributing
 

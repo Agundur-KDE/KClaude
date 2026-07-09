@@ -21,6 +21,8 @@ Item {
     property bool showSettings: false
     property bool soundEnabled: true
     property string defaultDir: ""
+    property int cleanupPeriodDays: 30
+    property var expiredSessionIds: []
     readonly property string homeDir: StandardPaths.standardLocations(StandardPaths.HomeLocation)[0] || ""
 
     // ponytail: no C++ file-IO plugin — read/write via the same executable
@@ -67,7 +69,50 @@ Item {
             } catch (e) {
                 root.sessions = []
             }
+            root.checkExpiredSessions()
         })
+    }
+
+    // Read-only: Claude Code's own cleanupPeriodDays setting (default 30),
+    // from its global settings.json — never write to that file, it's not
+    // ours and other Claude Code windows write to it too (race risk).
+    function reloadCleanupPeriodDays() {
+        readFile("~/.claude/settings.json", function(text) {
+            try {
+                const parsed = text ? JSON.parse(text) : {}
+                root.cleanupPeriodDays = (typeof parsed.cleanupPeriodDays === "number") ? parsed.cleanupPeriodDays : 30
+            } catch (e) {
+                root.cleanupPeriodDays = 30
+            }
+        })
+    }
+
+    // A session's underlying transcript can be gone even though the
+    // sessions.json shortcut still lists it — Claude Code deletes local
+    // transcripts older than cleanupPeriodDays on its own. Checking the
+    // actual file is more accurate than estimating from a saved date.
+    function transcriptPath(session) {
+        const dir = expandHome(session.directory).replace(/\/+$/, "")
+        const encoded = dir.replace(/\//g, "-")
+        return root.homeDir + "/.claude/projects/" + encoded + "/" + session.sessionId + ".jsonl"
+    }
+
+    function checkExpiredSessions() {
+        for (const session of root.sessions) {
+            if (!session.sessionId)
+                continue
+            const path = root.transcriptPath(session)
+            runCommand("test -f " + ShellQuote.shellQuote(path), function(sessionId) {
+                return function(data) {
+                    const isExpired = data["exit code"] !== 0
+                    const ids = root.expiredSessionIds.slice()
+                    const pos = ids.indexOf(sessionId)
+                    if (isExpired && pos === -1) ids.push(sessionId)
+                    else if (!isExpired && pos !== -1) ids.splice(pos, 1)
+                    root.expiredSessionIds = ids
+                }
+            }(session.sessionId))
+        }
     }
 
     function persist() {
@@ -159,6 +204,7 @@ Item {
         reload()
         reloadNotify()
         reloadSettings()
+        reloadCleanupPeriodDays()
     }
 
     // status.json/quota.json are written by external Claude Code hook
@@ -249,9 +295,14 @@ Item {
             delegate: PlasmaComponents.ItemDelegate {
                 id: delegateRoot
                 width: ListView.view.width
+                opacity: isExpired ? 0.5 : 1
                 onClicked: root.launch(modelData)
 
                 readonly property var sessionStatus: root.status[modelData.sessionId]
+                readonly property bool isExpired: root.expiredSessionIds.indexOf(modelData.sessionId) !== -1
+
+                PlasmaComponents.ToolTip.visible: isExpired && hovered
+                PlasmaComponents.ToolTip.text: i18n("Claude Code already deleted this session's local transcript (older than %1 days) — resuming will start a fresh session instead.", root.cleanupPeriodDays)
 
                 contentItem: RowLayout {
                     Rectangle {
@@ -302,6 +353,21 @@ Item {
                 placeholderText: i18n("e.g. ~/projects")
                 text: root.defaultDir
             }
+
+            Kirigami.Separator { Layout.fillWidth: true; Layout.topMargin: Kirigami.Units.smallSpacing }
+
+            PlasmaComponents.Label {
+                text: i18n("Session retention (Claude Code setting, read-only)")
+                opacity: 0.7
+            }
+            PlasmaComponents.Label {
+                text: i18n("Claude Code keeps a session's local transcript for %1 days, then deletes it automatically — resuming an older one here starts fresh instead. Change cleanupPeriodDays in ~/.claude/settings.json if you want longer retention.", root.cleanupPeriodDays)
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+                opacity: 0.6
+                font.italic: true
+            }
+
             Item { Layout.fillHeight: true }
             RowLayout {
                 Layout.alignment: Qt.AlignRight
@@ -358,11 +424,14 @@ Item {
                 visible: root.addingSession
                 enabled: nameField.text.length > 0 && directoryField.text.length > 0 && sessionIdField.text.length > 0
                 onClicked: {
+                    // Trim: pasting a session ID/path often drags along a
+                    // trailing newline, which silently breaks both the
+                    // transcript-path lookup and the actual --resume call.
                     root.sessions = root.sessions.concat([{
-                        name: nameField.text,
-                        description: descriptionField.text,
-                        directory: directoryField.text,
-                        sessionId: sessionIdField.text
+                        name: nameField.text.trim(),
+                        description: descriptionField.text.trim(),
+                        directory: directoryField.text.trim(),
+                        sessionId: sessionIdField.text.trim()
                     }])
                     root.persist()
                     nameField.text = ""

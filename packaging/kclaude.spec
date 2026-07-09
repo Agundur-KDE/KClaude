@@ -80,5 +80,13 @@ fi
 %{_datadir}/locale/*/LC_MESSAGES/plasma_applet_de.agundur.kclaude.mo
 
 %changelog
+* Thu Jul 09 2026 Alec <info@agundur.de> - 0.3.1
+- Session retention: reads Claude Code's cleanupPeriodDays (read-only,
+  never written — shared with every other running Claude Code window)
+  and dims a saved session whose local transcript is already gone, with
+  an explanatory tooltip
+- Fixed saved sessions silently keeping a trailing newline when pasted
+  into the name/directory/session-ID fields
+
 * Tue Jul 07 2026 Alec <info@agundur.de> - 0.1
 - Initial OBS package

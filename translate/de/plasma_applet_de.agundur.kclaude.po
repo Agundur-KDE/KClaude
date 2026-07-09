@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plasma_applet_de.agundur.kclaude\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-01 00:00+0000\n"
+"POT-Creation-Date: 2026-07-09 10:33+0200\n"
 "PO-Revision-Date: 2026-07-07 00:00+0000\n"
 "Last-Translator: Alec S. <scholz@agundur.de>\n"
 "Language-Team: German\n"
@@ -17,56 +17,100 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: package/contents/ui/FullRepresentation.qml:233
 msgid "KClaude Sessions"
 msgstr "KClaude-Sitzungen"
 
+#: package/contents/ui/FullRepresentation.qml:240
 msgid "Warning sound on prompts"
 msgstr "Warnton bei Rückfragen"
 
+#: package/contents/ui/FullRepresentation.qml:251
 msgid "Region screenshot to clipboard"
 msgstr "Bildschirmausschnitt in Zwischenablage"
 
-msgid "Screenshot a region → clipboard. Paste with Ctrl+V, e.g. into the Claude Code terminal."
+#: package/contents/ui/FullRepresentation.qml:256
+msgid ""
+"Screenshot a region → clipboard. Paste with Ctrl+V, e.g. into the Claude "
+"Code terminal."
 msgstr "Bildschirmausschnitt → Zwischenablage. Mit Strg+V einfügen, z. B. ins Claude-Code-Terminal."
+"Bildschirmausschnitt → Zwischenablage. Mit Strg+V einfügen, z. B. ins Claude-"
+"Code-Terminal."
 
-msgid "5h: %1% (Reset %2)   ·   7d: %3% (Reset %4)"
-msgstr "5 Std.: %1 % (Reset %2)   ·   7 Tage: %3 % (Reset %4)"
-
-msgid "No sessions saved yet."
-msgstr "Noch keine Sitzungen gespeichert."
-
-msgid "Name"
-msgstr "Name"
-
-msgid "Description (optional)"
-msgstr "Beschreibung (optional)"
-
-msgid "Directory, e.g. ~/projects/KClaude"
-msgstr "Verzeichnis, z. B. ~/projects/KClaude"
-
-msgid "Session ID (from claude --resume)"
-msgstr "Sitzungs-ID (von claude --resume)"
-
-msgid "Cancel"
-msgstr "Abbrechen"
-
-msgid "Save"
-msgstr "Speichern"
-
-msgid "Add session"
-msgstr "Sitzung hinzufügen"
-
+#: package/contents/ui/FullRepresentation.qml:261
 msgid "Settings"
 msgstr "Einstellungen"
 
+#: package/contents/ui/FullRepresentation.qml:272
+msgid "5h: %1% (Reset %2)   ·   7d: %3% (Reset %4)"
+msgstr "5 Std.: %1 % (Reset %2)   ·   7 Tage: %3 % (Reset %4)"
+
+#: package/contents/ui/FullRepresentation.qml:292
+msgid "No sessions saved yet."
+msgstr "Noch keine Sitzungen gespeichert."
+
+#: package/contents/ui/FullRepresentation.qml:305
+msgid ""
+"Claude Code already deleted this session's local transcript (older than %1 "
+"days) — resuming will start a fresh session instead."
+msgstr "Claude Code hat das lokale Transkript dieser Sitzung bereits gelöscht (älter als %1 Tage) — Fortsetzen startet stattdessen eine neue Sitzung."
+
+#: package/contents/ui/FullRepresentation.qml:347
 msgid "Default directory for \"New session\""
 msgstr "Standardverzeichnis für „Neue Sitzung“"
 
+#: package/contents/ui/FullRepresentation.qml:353
 msgid "e.g. ~/projects"
 msgstr "z. B. ~/projects"
 
+#: package/contents/ui/FullRepresentation.qml:360
+msgid "Session retention (Claude Code setting, read-only)"
+msgstr "Sitzungs-Aufbewahrung (Claude-Code-Einstellung, nur lesbar)"
+
+#: package/contents/ui/FullRepresentation.qml:364
+msgid ""
+"Claude Code keeps a session's local transcript for %1 days, then deletes it "
+"automatically — resuming an older one here starts fresh instead. Change "
+"cleanupPeriodDays in ~/.claude/settings.json if you want longer retention."
+msgstr "Claude Code bewahrt das lokale Transkript einer Sitzung %1 Tage lang auf und löscht es dann automatisch — das Fortsetzen einer älteren Sitzung startet stattdessen neu. cleanupPeriodDays in ~/.claude/settings.json ändern für längere Aufbewahrung."
+
+#: package/contents/ui/FullRepresentation.qml:375
+#: package/contents/ui/FullRepresentation.qml:423
+msgid "Save"
+msgstr "Speichern"
+
+#: package/contents/ui/FullRepresentation.qml:393
+msgid "Name"
+msgstr "Name"
+
+#: package/contents/ui/FullRepresentation.qml:398
+msgid "Description (optional)"
+msgstr "Beschreibung (optional)"
+
+#: package/contents/ui/FullRepresentation.qml:403
+msgid "Directory, e.g. ~/projects/KClaude"
+msgstr "Verzeichnis, z. B. ~/projects/KClaude"
+
+#: package/contents/ui/FullRepresentation.qml:408
+msgid "Session ID (from claude --resume)"
+msgstr "Sitzungs-ID (von claude --resume)"
+
+#: package/contents/ui/FullRepresentation.qml:418
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: package/contents/ui/FullRepresentation.qml:442
 msgid "New session"
 msgstr "Neue Sitzung"
 
+#: package/contents/ui/FullRepresentation.qml:448
 msgid "Set a default directory in Settings first."
 msgstr "Zuerst ein Standardverzeichnis in den Einstellungen festlegen."
+
+#: package/contents/ui/FullRepresentation.qml:451
+msgid "Add session"
+msgstr "Sitzung hinzufügen"
+
+#: package/contents/ui/main.qml:16
+msgid "KClaude"
+msgstr "KClaude"

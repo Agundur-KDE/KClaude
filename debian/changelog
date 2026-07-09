@@ -1,3 +1,14 @@
+kclaude (0.3.1-1) unstable; urgency=medium
+
+  * Session retention: reads Claude Code's cleanupPeriodDays (read-only,
+    never written — shared with every other running Claude Code window)
+    and dims a saved session whose local transcript is already gone, with
+    an explanatory tooltip.
+  * Fixed saved sessions silently keeping a trailing newline when pasted
+    into the name/directory/session-ID fields.
+
+ -- Agundur <info@agundur.de>  Thu, 09 Jul 2026 10:50:00 +0200
+
 kclaude (0.3-1) unstable; urgency=medium
 
   * Settings panel with a default directory for a new "New session" button
