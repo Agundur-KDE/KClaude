@@ -1,3 +1,10 @@
+kclaude (0.3.3-1) unstable; urgency=medium
+
+  * Edit mode for saved sessions (pencil icon), same form as "Add session".
+  * More spacing between the session list scrollbar and the delete button.
+
+ -- Agundur <info@agundur.de>  Fri, 10 Jul 2026 09:15:00 +0200
+
 kclaude (0.3.2-1) unstable; urgency=medium
 
   * Fixed "Neue Sitzung": konsole closed immediately when you typed exit in

@@ -18,6 +18,7 @@ Item {
     property var status: ({})
     property var quota: ({})
     property bool addingSession: false
+    property int editingIndex: -1
     property bool showSettings: false
     property bool soundEnabled: true
     property string defaultDir: ""
@@ -295,6 +296,7 @@ Item {
             delegate: PlasmaComponents.ItemDelegate {
                 id: delegateRoot
                 width: ListView.view.width
+                rightPadding: Kirigami.Units.gridUnit
                 opacity: isExpired ? 0.5 : 1
                 onClicked: root.launch(modelData)
 
@@ -327,6 +329,17 @@ Item {
                             opacity: 0.7
                             elide: Text.ElideRight
                             Layout.fillWidth: true
+                        }
+                    }
+                    PlasmaComponents.ToolButton {
+                        icon.name: "edit-entry"
+                        onClicked: {
+                            nameField.text = modelData.name || ""
+                            descriptionField.text = modelData.description || ""
+                            directoryField.text = modelData.directory || ""
+                            sessionIdField.text = modelData.sessionId || ""
+                            root.editingIndex = index
+                            root.addingSession = true
                         }
                     }
                     PlasmaComponents.ToolButton {
@@ -417,28 +430,39 @@ Item {
             PlasmaComponents.Button {
                 text: i18n("Cancel")
                 visible: root.addingSession
-                onClicked: root.addingSession = false
+                onClicked: {
+                    root.addingSession = false
+                    root.editingIndex = -1
+                }
             }
             PlasmaComponents.Button {
-                text: i18n("Save")
+                text: root.editingIndex >= 0 ? i18n("Change") : i18n("Save")
                 visible: root.addingSession
                 enabled: nameField.text.length > 0 && directoryField.text.length > 0 && sessionIdField.text.length > 0
                 onClicked: {
                     // Trim: pasting a session ID/path often drags along a
                     // trailing newline, which silently breaks both the
                     // transcript-path lookup and the actual --resume call.
-                    root.sessions = root.sessions.concat([{
+                    const entry = {
                         name: nameField.text.trim(),
                         description: descriptionField.text.trim(),
                         directory: directoryField.text.trim(),
                         sessionId: sessionIdField.text.trim()
-                    }])
+                    }
+                    if (root.editingIndex >= 0) {
+                        const copy = root.sessions.slice()
+                        copy[root.editingIndex] = entry
+                        root.sessions = copy
+                    } else {
+                        root.sessions = root.sessions.concat([entry])
+                    }
                     root.persist()
                     nameField.text = ""
                     descriptionField.text = ""
                     directoryField.text = ""
                     sessionIdField.text = ""
                     root.addingSession = false
+                    root.editingIndex = -1
                 }
             }
             PlasmaComponents.Button {
