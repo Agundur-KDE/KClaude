@@ -1,3 +1,11 @@
+kclaude (0.3.2-1) unstable; urgency=medium
+
+  * Fixed "Neue Sitzung": konsole closed immediately when you typed exit in
+    Claude, so the --resume session ID it prints on exit was never visible
+    to copy. Added --hold so the terminal stays open after the session ends.
+
+ -- Agundur <info@agundur.de>  Fri, 10 Jul 2026 08:00:00 +0200
+
 kclaude (0.3.1-1) unstable; urgency=medium
 
   * Session retention: reads Claude Code's cleanupPeriodDays (read-only,

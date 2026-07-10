@@ -184,7 +184,7 @@ Item {
 
     function launch(session) {
         const dir = expandHome(session.directory)
-        let cmd = "konsole --workdir " + ShellQuote.shellQuote(dir) + " -e claude"
+        let cmd = "konsole --hold --workdir " + ShellQuote.shellQuote(dir) + " -e claude"
         if (session.sessionId)
             cmd += " --resume " + ShellQuote.shellQuote(session.sessionId)
         executable.connectSource(cmd)

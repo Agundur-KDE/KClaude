@@ -3,7 +3,7 @@
 %endif
 
 Name:           kclaude
-Version:        0.1
+Version:        0.3.2
 Release:        1%{?dist}
 Summary:        KDE Plasma 6 panel widget for Claude Code sessions
 
@@ -80,6 +80,13 @@ fi
 %{_datadir}/locale/*/LC_MESSAGES/plasma_applet_de.agundur.kclaude.mo
 
 %changelog
+* Fri Jul 10 2026 Alec <info@agundur.de> - 0.3.2
+- Fixed "Neue Sitzung": konsole closed immediately when you typed exit in
+  Claude, so the --resume session ID it prints on exit was never visible
+  to copy. Added --hold so the terminal stays open after the session ends.
+- Fixed Version field being stuck at 0.1 in this spec despite %changelog
+  already listing 0.3.1 — OBS builds were shipping the wrong version.
+
 * Thu Jul 09 2026 Alec <info@agundur.de> - 0.3.1
 - Session retention: reads Claude Code's cleanupPeriodDays (read-only,
   never written — shared with every other running Claude Code window)
