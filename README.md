@@ -4,8 +4,8 @@
     <img src="screenshots/logo.png" width="128" alt="KClaude logo">
   </picture>
   <h1>KClaude</h1>
-  <p>KDE Plasma 6 panel widget for Claude Code: save sessions, resume them<br>
-  in a terminal, see at a glance which ones are waiting on you.</p>
+  <p>Resume your Claude Code sessions without hunting for the right<br>
+  directory or session ID — one click from the panel.</p>
   <p><a href="https://www.agundur.de/projects/kclaude.html">Project page</a></p>
 </div>
 
@@ -139,10 +139,7 @@ drop that matcher if it's too noisy.
 This is Anthropic's account-wide 5h/7d rate-limit window (Claude.ai Pro/Max
 only) — a different thing from the per-session context window. It comes
 straight from the statusLine hook's `rate_limits` field, no OAuth handling or
-API calls of our own needed. If you want a fuller dashboard (rings/bars,
-per-model breakdown, more languages), the
-[Claude Usage](https://store.kde.org/p/2331316) plasmoid covers that in more
-depth and pairs fine alongside KClaude.
+API calls of our own needed.
 
 ## Session retention
 
