@@ -3,7 +3,7 @@
 %endif
 
 Name:           kclaude
-Version:        0.3.3
+Version:        0.3.4
 Release:        1%{?dist}
 Summary:        KDE Plasma 6 panel widget for Claude Code sessions
 
@@ -80,6 +80,11 @@ fi
 %{_datadir}/locale/*/LC_MESSAGES/plasma_applet_de.agundur.kclaude.mo
 
 %changelog
+* Fri Jul 10 2026 Alec <info@agundur.de> - 0.3.4
+- Fixed a rare plasmashell crash (Qt6 QML engine bug) caused by repeated
+  insert/delete on a plain JS object used to track in-flight status/quota
+  polls; switched to a Map instead.
+
 * Fri Jul 10 2026 Alec <info@agundur.de> - 0.3.3
 - Edit mode for saved sessions (pencil icon), same form as "Add session".
 - More spacing between the session list scrollbar and the delete button.

@@ -1,3 +1,11 @@
+kclaude (0.3.4-1) unstable; urgency=medium
+
+  * Fixed a rare plasmashell crash (Qt6 QML engine bug) caused by repeated
+    insert/delete on a plain JS object used to track in-flight status/quota
+    polls; switched to a Map instead.
+
+ -- Agundur <info@agundur.de>  Fri, 10 Jul 2026 17:30:00 +0200
+
 kclaude (0.3.3-1) unstable; urgency=medium
 
   * Edit mode for saved sessions (pencil icon), same form as "Add session".

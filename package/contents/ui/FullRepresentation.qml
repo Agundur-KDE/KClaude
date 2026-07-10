@@ -17,6 +17,8 @@ Item {
     property var sessions: []
     property var status: ({})
     property var quota: ({})
+    property string lastStatusText: ""
+    property string lastQuotaText: ""
     property bool addingSession: false
     property int editingIndex: -1
     property bool showSettings: false
@@ -37,18 +39,24 @@ Item {
         id: executable
         engine: "executable"
         connectedSources: []
-        property var pending: ({})
+        // Map, not a plain object: status/quota poll the same two command
+        // strings forever, and repeatedly inserting+deleting the same keys
+        // on a QML `property var` object (JS object shape churn) was
+        // tripping a Qt6 QML engine crash (QV4::Object::insertMember) after
+        // enough cycles. Map.set/get/delete don't touch object-shape
+        // machinery the same way.
+        property var pending: new Map()
         onNewData: (sourceName, data) => {
             disconnectSource(sourceName)
-            const callback = pending[sourceName]
-            delete pending[sourceName]
+            const callback = pending.get(sourceName)
+            pending.delete(sourceName)
             if (callback)
                 callback(data)
         }
     }
 
     function runCommand(cmd, callback) {
-        executable.pending[cmd] = callback || null
+        executable.pending.set(cmd, callback || null)
         executable.connectSource(cmd)
     }
 
@@ -122,6 +130,8 @@ Item {
 
     function reloadStatus() {
         readFile("~/.config/kclaude/status.json", function(text) {
+            if (text === root.lastStatusText) return
+            root.lastStatusText = text
             try {
                 root.status = text ? JSON.parse(text) : ({})
             } catch (e) {
@@ -132,6 +142,8 @@ Item {
 
     function reloadQuota() {
         readFile("~/.config/kclaude/quota.json", function(text) {
+            if (text === root.lastQuotaText) return
+            root.lastQuotaText = text
             try {
                 root.quota = text ? JSON.parse(text) : ({})
             } catch (e) {
