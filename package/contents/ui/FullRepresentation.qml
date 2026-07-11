@@ -24,6 +24,10 @@ Item {
     property bool addingSession: false
     property int editingIndex: -1
     property bool showSettings: false
+    property bool showImport: false
+    property var importCandidates: []
+    property var liveSessions: ({})
+    property string exportMessage: ""
     property bool soundEnabled: true
     property string defaultDir: ""
     property int cleanupPeriodDays: 30
@@ -133,6 +137,99 @@ Item {
         writeFile("~/.config/kclaude/sessions.json", JSON.stringify(sessions))
     }
 
+    function exportSessions() {
+        runCommand("cp ~/.config/kclaude/sessions.json ~/kclaude-sessions-backup-$(date +%Y%m%d-%H%M%S).json",
+            function(data) {
+                root.exportMessage = data["exit code"] === 0
+                    ? i18n("Backup saved to your home folder.")
+                    : i18n("Export failed — no sessions saved yet?")
+                exportMessageTimer.restart()
+            })
+    }
+
+    // Finds Claude Code sessions on disk that aren't in sessions.json yet, so
+    // they can be added without copy-pasting the session ID out of a
+    // terminal. Reads only ai-title (last one wins — it's regenerated many
+    // times over a session's life) as a name suggestion and cwd as the
+    // directory; both are plain grep/sed, no jq (the widget itself has no
+    // dependency beyond coreutils/konsole/kwin, jq is only used by the
+    // separate hook scripts under scripts/).
+    function reloadImportCandidates() {
+        const cmd = "for f in ~/.claude/projects/*/*.jsonl; do "
+            + "[ -f \"$f\" ] || continue; "
+            + "sid=$(basename \"$f\" .jsonl); "
+            + "cwd=$(grep -m1 -o '\"cwd\":\"[^\"]*\"' \"$f\" 2>/dev/null | sed 's/^\"cwd\":\"//;s/\"$//'); "
+            + "title=$(grep -o '\"aiTitle\":\"[^\"]*\"' \"$f\" 2>/dev/null | tail -1 | sed 's/^\"aiTitle\":\"//;s/\"$//'); "
+            + "printf '%s\\t%s\\t%s\\n' \"$sid\" \"$cwd\" \"$title\"; "
+            + "done"
+        runCommand(cmd, function(data) {
+            const known = {}
+            for (const s of root.sessions) known[s.sessionId] = true
+            const candidates = []
+            for (const line of (data.stdout || "").split("\n")) {
+                if (!line) continue
+                const parts = line.split("\t")
+                const sid = parts[0] || ""
+                if (!sid || known[sid]) continue
+                candidates.push({ sessionId: sid, directory: parts[1] || "", name: parts[2] || "" })
+            }
+            root.importCandidates = candidates
+        })
+    }
+
+    function addImportCandidate(index) {
+        const c = root.importCandidates[index]
+        if (!c) return
+        root.sessions = root.sessions.concat([{
+            name: c.name,
+            description: "",
+            directory: c.directory,
+            sessionId: c.sessionId
+        }])
+        root.persist()
+        const remaining = root.importCandidates.slice()
+        remaining.splice(index, 1)
+        root.importCandidates = remaining
+    }
+
+    // Live sessions (~/.claude/sessions/<pid>.json, one file per currently
+    // running `claude` process) carry the name set via /rename or --name.
+    // Mirrored into our own sessions one-way (Claude Code wins while
+    // running) so KClaude's list and Claude Code's own /resume picker don't
+    // silently drift apart — see FullRepresentation edit-lock below for the
+    // other half of this (editing is disabled while a session is live).
+    // ai-title is deliberately NOT synced this way: it's regenerated
+    // constantly during normal use and would make the list flicker: it's
+    // only used as a one-time suggestion in reloadImportCandidates() above.
+    function reloadLiveSessions() {
+        const cmd = "for f in ~/.claude/sessions/*.json; do [ -f \"$f\" ] && { cat \"$f\"; echo; }; done 2>/dev/null"
+        runCommand(cmd, function(data) {
+            const map = {}
+            for (const line of (data.stdout || "").split("\n")) {
+                if (!line) continue
+                try {
+                    const obj = JSON.parse(line)
+                    if (obj.sessionId) map[obj.sessionId] = { name: obj.name || "", status: obj.status || "" }
+                } catch (e) { /* partial/torn read this poll, skip */ }
+            }
+            root.liveSessions = map
+
+            let changed = false
+            const copy = root.sessions.slice()
+            for (let i = 0; i < copy.length; i++) {
+                const live = map[copy[i].sessionId]
+                if (live && live.name && live.name !== copy[i].name) {
+                    copy[i] = Object.assign({}, copy[i], { name: live.name })
+                    changed = true
+                }
+            }
+            if (changed) {
+                root.sessions = copy
+                root.persist()
+            }
+        })
+    }
+
     // Polled every 2s -- skip the reassignment when the file hasn't
     // changed, a fresh object every tick was tripping a Qt6 QML engine
     // GC/property-store crash (QV4::Object::insertMember) after enough
@@ -227,6 +324,14 @@ Item {
         // running child on destruction, taking the Claude session with it.
         let spawn = "setsid -f konsole --hold --workdir " + ShellQuote.shellQuote(dir) + " -e claude"
 
+        // --name makes Claude Code itself show this session's KClaude name
+        // in its own prompt box and /resume picker (live-verified: Konsole's
+        // -p tabtitle= marker below, used for window-focus matching, is NOT
+        // overwritten by this — a fixed tabtitle wins over the app's own
+        // terminal-title escape sequences).
+        if (session.name)
+            spawn += " --name " + ShellQuote.shellQuote(session.name)
+
         if (!session.sessionId) {
             executable.connectSource(spawn)
             return
@@ -284,8 +389,9 @@ Item {
     }
 
     // status.json/quota.json are written by external Claude Code hook
-    // scripts — poll instead of the instant push a file watcher would give,
-    // since pure QML has no cross-process file-change notification.
+    // scripts, ~/.claude/sessions/*.json by Claude Code's own CLI — poll
+    // instead of the instant push a file watcher would give, since pure QML
+    // has no cross-process file-change notification.
     Timer {
         interval: 2000
         running: true
@@ -294,7 +400,14 @@ Item {
         onTriggered: {
             root.reloadStatus()
             root.reloadQuota()
+            root.reloadLiveSessions()
         }
+    }
+
+    Timer {
+        id: exportMessageTimer
+        interval: 3000
+        onTriggered: root.exportMessage = ""
     }
 
     ColumnLayout {
@@ -333,12 +446,49 @@ Item {
             }
 
             PlasmaComponents.ToolButton {
+                icon.name: "document-import"
+                text: i18n("Import sessions from disk")
+                display: PlasmaComponents.ToolButton.IconOnly
+                checkable: true
+                checked: root.showImport
+                onClicked: {
+                    root.showImport = !root.showImport
+                    if (root.showImport) {
+                        root.addingSession = false
+                        root.showSettings = false
+                        root.editingIndex = -1
+                        root.reloadImportCandidates()
+                    }
+                }
+
+                PlasmaComponents.ToolTip.visible: hovered
+                PlasmaComponents.ToolTip.text: i18n("Find existing Claude Code sessions on disk that aren't saved here yet")
+            }
+
+            PlasmaComponents.ToolButton {
+                icon.name: "document-export"
+                text: i18n("Export sessions as backup")
+                display: PlasmaComponents.ToolButton.IconOnly
+                onClicked: root.exportSessions()
+
+                PlasmaComponents.ToolTip.visible: hovered
+                PlasmaComponents.ToolTip.text: i18n("Save a timestamped backup copy of your saved sessions to your home folder")
+            }
+
+            PlasmaComponents.ToolButton {
                 icon.name: "configure"
                 text: i18n("Settings")
                 display: PlasmaComponents.ToolButton.IconOnly
                 checkable: true
                 checked: root.showSettings
-                onClicked: root.showSettings = !root.showSettings
+                onClicked: {
+                    root.showSettings = !root.showSettings
+                    if (root.showSettings) {
+                        root.addingSession = false
+                        root.showImport = false
+                        root.editingIndex = -1
+                    }
+                }
             }
 
             PlasmaComponents.ToolButton {
@@ -375,10 +525,17 @@ Item {
                 root.quota.seven_day ? root.formatResetTime(root.quota.seven_day.resets_at) : "?")
         }
 
+        PlasmaComponents.Label {
+            visible: root.exportMessage.length > 0
+            opacity: 0.7
+            font.italic: true
+            text: root.exportMessage
+        }
+
         ListView {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: !root.addingSession && !root.showSettings
+            visible: !root.addingSession && !root.showSettings && !root.showImport
             model: root.sessions
             clip: true
             spacing: Kirigami.Units.smallSpacing
@@ -419,6 +576,7 @@ Item {
 
                 readonly property var sessionStatus: root.status[modelData.sessionId]
                 readonly property bool isExpired: root.expiredSessionIds.indexOf(modelData.sessionId) !== -1
+                readonly property bool isLive: !!root.liveSessions[modelData.sessionId]
 
                 PlasmaComponents.ToolTip.visible: isExpired && hovered
                 PlasmaComponents.ToolTip.text: i18n("Claude Code already deleted this session's local transcript (older than %1 days) — resuming will start a fresh session instead.", root.cleanupPeriodDays)
@@ -450,6 +608,7 @@ Item {
                     }
                     PlasmaComponents.ToolButton {
                         icon.name: "edit-entry"
+                        enabled: !delegateRoot.isLive
                         onClicked: {
                             nameField.text = modelData.name || ""
                             descriptionField.text = modelData.description || ""
@@ -458,6 +617,9 @@ Item {
                             root.editingIndex = index
                             root.addingSession = true
                         }
+
+                        PlasmaComponents.ToolTip.visible: delegateRoot.isLive && hovered
+                        PlasmaComponents.ToolTip.text: i18n("Managed by the running Claude Code session — use /rename there instead")
                     }
                     PlasmaComponents.ToolButton {
                         icon.name: "edit-delete"
@@ -470,7 +632,7 @@ Item {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: root.showSettings
+            visible: root.showSettings && !root.showImport
             spacing: Kirigami.Units.smallSpacing
 
             PlasmaComponents.Label {
@@ -514,7 +676,7 @@ Item {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: root.addingSession && !root.showSettings
+            visible: root.addingSession && !root.showSettings && !root.showImport
             spacing: Kirigami.Units.smallSpacing
 
             PlasmaComponents.TextField {
@@ -540,9 +702,91 @@ Item {
             Item { Layout.fillHeight: true }
         }
 
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: root.showImport
+            spacing: Kirigami.Units.smallSpacing
+
+            RowLayout {
+                Layout.fillWidth: true
+                PlasmaComponents.Label {
+                    text: i18n("Sessions found on disk, not saved yet")
+                    opacity: 0.7
+                    Layout.fillWidth: true
+                }
+                PlasmaComponents.ToolButton {
+                    icon.name: "view-refresh"
+                    text: i18n("Refresh")
+                    display: PlasmaComponents.ToolButton.IconOnly
+                    onClicked: root.reloadImportCandidates()
+
+                    PlasmaComponents.ToolTip.visible: hovered
+                    PlasmaComponents.ToolTip.text: i18n("Scan again")
+                }
+            }
+
+            ListView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                model: root.importCandidates
+                spacing: Kirigami.Units.smallSpacing
+                PlasmaComponents.ScrollBar.vertical: PlasmaComponents.ScrollBar {}
+
+                PlasmaComponents.Label {
+                    anchors.centerIn: parent
+                    width: parent.width - 2 * Kirigami.Units.gridUnit
+                    visible: root.importCandidates.length === 0
+                    opacity: 0.6
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignHCenter
+                    text: i18n("No new sessions found. Sessions already saved here are skipped.")
+                }
+
+                delegate: PlasmaComponents.ItemDelegate {
+                    width: ListView.view.width
+                    contentItem: RowLayout {
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+                            PlasmaComponents.Label {
+                                text: modelData.name || i18n("(unnamed)")
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                            PlasmaComponents.Label {
+                                text: modelData.directory
+                                opacity: 0.7
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                        }
+                        PlasmaComponents.ToolButton {
+                            icon.name: "list-add"
+                            text: i18n("Add")
+                            display: PlasmaComponents.ToolButton.IconOnly
+                            onClicked: root.addImportCandidate(index)
+
+                            PlasmaComponents.ToolTip.visible: hovered
+                            PlasmaComponents.ToolTip.text: i18n("Save this session to the list above")
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                PlasmaComponents.Button {
+                    text: i18n("Close")
+                    onClicked: root.showImport = false
+                }
+            }
+        }
+
         RowLayout {
             Layout.alignment: Qt.AlignRight
-            visible: !root.showSettings
+            visible: !root.showSettings && !root.showImport
 
             PlasmaComponents.Button {
                 text: i18n("Cancel")
