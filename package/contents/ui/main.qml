@@ -2,9 +2,13 @@ import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.core as PlasmaCore
+import org.kde.plasma.plasma5support as Plasma5Support
 import org.kde.plasma.plasmoid
+import "ShellQuote.js" as ShellQuote
 
 PlasmoidItem {
+    id: plasmoidRoot
+
     preferredRepresentation: {
         const edge = Plasmoid.location;
         if (edge === PlasmaCore.Types.TopEdge || edge === PlasmaCore.Types.BottomEdge
@@ -25,6 +29,27 @@ PlasmoidItem {
     // instead makes it reachable from anywhere in the package, same pattern
     // plasma-workspace's systemtray applet uses for its own pin button.
     hideOnWindowDeactivate: !Plasmoid.configuration.pin
+
+    // claude-notify.sh (an external hook script, no direct channel into a
+    // running plasmoid) reads this to skip the OS notification popup when
+    // the panel popup is already open — the row flash covers it instead.
+    // ponytail: last writer wins if both a panel and a desktop instance are
+    // open simultaneously; fine for the common single-instance case.
+    Plasma5Support.DataSource {
+        id: stateWriter
+        engine: "executable"
+        connectedSources: []
+        onNewData: (sourceName, data) => disconnectSource(sourceName)
+    }
+    function writePopupState() {
+        stateWriter.connectSource(
+            "mkdir -p ~/.config/kclaude && printf '%s' "
+            + ShellQuote.shellQuote(JSON.stringify({ expanded: plasmoidRoot.expanded }))
+            + " > ~/.config/kclaude/popup_state.json"
+        )
+    }
+    onExpandedChanged: writePopupState()
+    Component.onCompleted: writePopupState()
 
     fullRepresentation: FullRepresentation {
         Layout.minimumWidth: 480
