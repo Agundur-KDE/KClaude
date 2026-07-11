@@ -71,8 +71,10 @@ fi
 %doc README.md
 %dir %{_datadir}/plasma/plasmoids/de.agundur.kclaude
 %dir %{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents
+%dir %{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents/config
 %dir %{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents/ui
 %{_datadir}/plasma/plasmoids/de.agundur.kclaude/metadata.json
+%{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents/config/main.xml
 %{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents/ui/main.qml
 %{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents/ui/FullRepresentation.qml
 %{_datadir}/plasma/plasmoids/de.agundur.kclaude/contents/ui/ShellQuote.js
