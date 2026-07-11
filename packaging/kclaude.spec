@@ -3,7 +3,7 @@
 %endif
 
 Name:           kclaude
-Version:        0.3.4
+Version:        0.3.5
 Release:        1%{?dist}
 Summary:        KDE Plasma 6 panel widget for Claude Code sessions
 
@@ -80,6 +80,15 @@ fi
 %{_datadir}/locale/*/LC_MESSAGES/plasma_applet_de.agundur.kclaude.mo
 
 %changelog
+* Sat Jul 11 2026 Alec <info@agundur.de> - 0.3.5
+- Pin button to keep the panel popup open (panel only, not on a desktop
+  instance where there's no popup to pin).
+- Click a session that's already running raises its window instead of
+  spawning a duplicate (KWin scripting, unique window title per session).
+- A session's row flashes red when it starts waiting for input.
+- The OS notification popup is skipped when the panel is already open —
+  the row flash covers it, avoids a redundant popup.
+
 * Fri Jul 10 2026 Alec <info@agundur.de> - 0.3.4
 - Fixed a rare plasmashell crash (Qt6 QML engine bug) caused by repeated
   insert/delete on a plain JS object used to track in-flight status/quota

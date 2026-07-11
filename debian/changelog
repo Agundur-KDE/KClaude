@@ -1,3 +1,15 @@
+kclaude (0.3.5-1) unstable; urgency=medium
+
+  * Pin button to keep the panel popup open (panel only, not on a desktop
+    instance where there's no popup to pin).
+  * Click a session that's already running raises its window instead of
+    spawning a duplicate (KWin scripting, unique window title per session).
+  * A session's row flashes red when it starts waiting for input.
+  * The OS notification popup is skipped when the panel is already open —
+    the row flash covers it, avoids a redundant popup.
+
+ -- Agundur <info@agundur.de>  Sat, 11 Jul 2026 08:30:00 +0200
+
 kclaude (0.3.4-1) unstable; urgency=medium
 
   * Fixed a rare plasmashell crash (Qt6 QML engine bug) caused by repeated
