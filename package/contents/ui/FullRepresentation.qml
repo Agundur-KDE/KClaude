@@ -295,11 +295,10 @@ Item {
                 checkable: true
                 checked: Plasmoid.configuration.pin
                 onToggled: Plasmoid.configuration.pin = checked
-                // Only meaningful when there's a popup to keep open. An
-                // embedded desktop instance (large enough to skip the
-                // compact+popup mode) has nothing to pin — same convention
-                // KDE Connect's own applet follows.
-                visible: Plasmoid.formFactor !== PlasmaCore.Types.Planar
+                // Only meaningful when there's a popup to keep open. A
+                // desktop-placed instance is embedded directly, nothing to
+                // pin — same convention KDE Connect's own applet follows.
+                visible: Plasmoid.location !== PlasmaCore.Types.Desktop
 
                 PlasmaComponents.ToolTip.visible: hovered
                 PlasmaComponents.ToolTip.text: i18n("Keep this window open even when it loses focus")
