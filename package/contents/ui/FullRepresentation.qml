@@ -6,8 +6,10 @@ import QtCore
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.components 3.0 as PlasmaComponents
 import org.kde.plasma.plasma5support as Plasma5Support
+import org.kde.plasma.plasmoid
 import "ShellQuote.js" as ShellQuote
 
 Item {
@@ -128,6 +130,10 @@ Item {
         writeFile("~/.config/kclaude/sessions.json", JSON.stringify(sessions))
     }
 
+    // Polled every 2s -- skip the reassignment when the file hasn't
+    // changed, a fresh object every tick was tripping a Qt6 QML engine
+    // GC/property-store crash (QV4::Object::insertMember) after enough
+    // repeated churn.
     function reloadStatus() {
         readFile("~/.config/kclaude/status.json", function(text) {
             if (text === root.lastStatusText) return
@@ -197,7 +203,11 @@ Item {
 
     function launch(session) {
         const dir = expandHome(session.directory)
-        let cmd = "konsole --hold --workdir " + ShellQuote.shellQuote(dir) + " -e claude"
+        // setsid -f detaches konsole into its own session immediately, so it
+        // survives even if this DataSource (and its QProcess) gets torn down
+        // later (e.g. applet reload) — otherwise QProcess kills the still-
+        // running child on destruction, taking the Claude session with it.
+        let cmd = "setsid -f konsole --hold --workdir " + ShellQuote.shellQuote(dir) + " -e claude"
         if (session.sessionId)
             cmd += " --resume " + ShellQuote.shellQuote(session.sessionId)
         executable.connectSource(cmd)
@@ -276,6 +286,21 @@ Item {
                 checkable: true
                 checked: root.showSettings
                 onClicked: root.showSettings = !root.showSettings
+            }
+
+            PlasmaComponents.ToolButton {
+                icon.name: "window-pin"
+                text: i18n("Keep window open")
+                display: PlasmaComponents.ToolButton.IconOnly
+                checkable: true
+                checked: Plasmoid.configuration.pin
+                onToggled: Plasmoid.configuration.pin = checked
+                // On the desktop (Planar) there's no popup to pin open —
+                // fullRepresentation is already embedded directly.
+                visible: Plasmoid.formFactor !== PlasmaCore.Types.Planar
+
+                PlasmaComponents.ToolTip.visible: hovered
+                PlasmaComponents.ToolTip.text: i18n("Keep this window open even when it loses focus")
             }
         }
 
