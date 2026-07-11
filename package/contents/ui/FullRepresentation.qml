@@ -6,8 +6,10 @@ import QtCore
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.components 3.0 as PlasmaComponents
 import org.kde.plasma.plasma5support as Plasma5Support
+import org.kde.plasma.plasmoid
 import "ShellQuote.js" as ShellQuote
 
 Item {
@@ -27,6 +29,9 @@ Item {
     property int cleanupPeriodDays: 30
     property var expiredSessionIds: []
     readonly property string homeDir: StandardPaths.standardLocations(StandardPaths.HomeLocation)[0] || ""
+
+    signal sessionStartedWaiting(string sessionId)
+    property bool statusInitialized: false
 
     // ponytail: no C++ file-IO plugin — read/write via the same executable
     // dataengine already used for launching sessions, so the plasmoid stays
@@ -128,15 +133,33 @@ Item {
         writeFile("~/.config/kclaude/sessions.json", JSON.stringify(sessions))
     }
 
+    // Polled every 2s -- skip the reassignment when the file hasn't
+    // changed, a fresh object every tick was tripping a Qt6 QML engine
+    // GC/property-store crash (QV4::Object::insertMember) after enough
+    // repeated churn.
     function reloadStatus() {
         readFile("~/.config/kclaude/status.json", function(text) {
             if (text === root.lastStatusText) return
             root.lastStatusText = text
+            const previous = root.status
+            let next
             try {
-                root.status = text ? JSON.parse(text) : ({})
+                next = text ? JSON.parse(text) : ({})
             } catch (e) {
-                root.status = ({})
+                next = ({})
             }
+            // Flash only on the transition into "waiting", not on every poll
+            // tick while it stays waiting, and never on the very first load
+            // (nothing "transitioned", it was just read for the first time).
+            if (root.statusInitialized) {
+                for (const sessionId in next) {
+                    const wasWaiting = previous[sessionId] && previous[sessionId].state === "waiting"
+                    if (next[sessionId].state === "waiting" && !wasWaiting)
+                        root.sessionStartedWaiting(sessionId)
+                }
+            }
+            root.statusInitialized = true
+            root.status = next
         })
     }
 
@@ -195,12 +218,52 @@ Item {
         return dir
     }
 
+    // Already running -> raise its window, otherwise start it.
     function launch(session) {
         const dir = expandHome(session.directory)
-        let cmd = "konsole --hold --workdir " + ShellQuote.shellQuote(dir) + " -e claude"
-        if (session.sessionId)
-            cmd += " --resume " + ShellQuote.shellQuote(session.sessionId)
-        executable.connectSource(cmd)
+        // setsid -f detaches konsole into its own session immediately, so it
+        // survives even if this DataSource (and its QProcess) gets torn down
+        // later (e.g. applet reload) — otherwise QProcess kills the still-
+        // running child on destruction, taking the Claude session with it.
+        let spawn = "setsid -f konsole --hold --workdir " + ShellQuote.shellQuote(dir) + " -e claude"
+
+        if (!session.sessionId) {
+            executable.connectSource(spawn)
+            return
+        }
+
+        // sessionId is Claude Code's own UUID, safe to use unquoted as both
+        // a pgrep pattern and a window-title marker. If a konsole tagged
+        // with this session is already running, raise it via a KWin script
+        // instead of spawning a duplicate — cheaper and more reliable than
+        // embedding a terminal in the popup (no separate process lifetime
+        // to manage, keeps normal window-manager behavior).
+        const marker = "kclaude-" + session.sessionId
+        spawn = spawn.replace("konsole --hold", "konsole --hold -p tabtitle=" + ShellQuote.shellQuote(marker))
+        spawn += " --resume " + ShellQuote.shellQuote(session.sessionId)
+
+        // Plain `pgrep -f marker` self-matches: the whole command below is
+        // passed as this very shell's own argv, so the marker text is always
+        // present in ps output regardless of whether a real konsole is
+        // running. Restrict to processes whose actual executable
+        // (/proc/<pid>/comm) is konsole.
+        const found = "found=0; for pid in $(pgrep -f " + ShellQuote.shellQuote(marker) + "); do "
+            + "[ \"$(cat /proc/$pid/comm 2>/dev/null)\" = konsole ] && found=1; done; [ \"$found\" = 1 ]"
+
+        const focusScript = "/tmp/" + marker + ".kwinscript.js"
+        const js = "var w=workspace.windowList();for(var i=0;i<w.length;i++){"
+            + "if(w[i].caption&&w[i].caption.indexOf(" + JSON.stringify(marker) + ")!==-1){"
+            + "workspace.activeWindow=w[i];}}"
+        // loadScript fails (-1) if a plugin under this name is already
+        // loaded — unload first so every activation starts from a clean
+        // slate regardless of leftover state from a previous call.
+        const activate = "cat > " + ShellQuote.shellQuote(focusScript) + " <<'EOF'\n" + js + "\nEOF\n"
+            + "qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript kclaude-focus\n"
+            + "qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "
+            + ShellQuote.shellQuote(focusScript) + " kclaude-focus\n"
+            + "qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start"
+
+        executable.connectSource("if " + found + "; then " + activate + "; else " + spawn + "; fi")
     }
 
     function formatResetTime(epochSeconds) {
@@ -277,6 +340,29 @@ Item {
                 checked: root.showSettings
                 onClicked: root.showSettings = !root.showSettings
             }
+
+            PlasmaComponents.ToolButton {
+                icon.name: "window-pin"
+                text: i18n("Keep window open")
+                display: PlasmaComponents.ToolButton.IconOnly
+                checkable: true
+                checked: Plasmoid.configuration.pin
+                onToggled: Plasmoid.configuration.pin = checked
+                // Only meaningful when there's a popup to keep open. Desktop
+                // placement embeds directly, nothing to pin. Checking
+                // membership in the panel edges (not just "!== Desktop") is
+                // KDE Connect's own proven pattern for this — the modern
+                // org.kde.plasma.folder desktop containment reports
+                // Floating, not Desktop, so excluding only Desktop still
+                // showed the pin there.
+                visible: [
+                    PlasmaCore.Types.TopEdge, PlasmaCore.Types.RightEdge,
+                    PlasmaCore.Types.BottomEdge, PlasmaCore.Types.LeftEdge,
+                ].includes(Plasmoid.location)
+
+                PlasmaComponents.ToolTip.visible: hovered
+                PlasmaComponents.ToolTip.text: i18n("Keep this window open even when it loses focus")
+            }
         }
 
         PlasmaComponents.Label {
@@ -310,7 +396,26 @@ Item {
                 width: ListView.view.width
                 rightPadding: Kirigami.Units.gridUnit
                 opacity: isExpired ? 0.5 : 1
+                // Single click: already running -> raise it, otherwise start it.
                 onClicked: root.launch(modelData)
+
+                background: Rectangle {
+                    id: flashBackground
+                    color: "red"
+                    opacity: 0
+                }
+                SequentialAnimation {
+                    id: flashAnimation
+                    PropertyAction { target: flashBackground; property: "opacity"; value: 0.6 }
+                    PauseAnimation { duration: 1000 }
+                    NumberAnimation { target: flashBackground; property: "opacity"; to: 0; duration: 1800; easing.type: Easing.OutQuad }
+                }
+                Connections {
+                    target: root
+                    function onSessionStartedWaiting(sessionId) {
+                        if (sessionId === modelData.sessionId) flashAnimation.restart()
+                    }
+                }
 
                 readonly property var sessionStatus: root.status[modelData.sessionId]
                 readonly property bool isExpired: root.expiredSessionIds.indexOf(modelData.sessionId) !== -1

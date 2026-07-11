@@ -36,9 +36,19 @@ if [[ "$sound_enabled" == "true" ]]; then
     paplay /usr/share/sounds/freedesktop/stereo/dialog-warning.oga &
 fi
 
-# kdialog --passivepopup always shows "kdialog" as the sender — going straight to
-# the Notifications D-Bus API lets us set app_name to something recognizable.
-gdbus call --session --dest org.freedesktop.Notifications \
-    --object-path /org/freedesktop/Notifications \
-    --method org.freedesktop.Notifications.Notify \
-    "KClaude" 0 "kclaude" "$title" "$message" "[]" "{}" 8000 >/dev/null
+# Skip the OS popup if the KClaude panel is already open — the waiting
+# session's row flashes red there instead, a second popup would be noise.
+popup_state="$HOME/.config/kclaude/popup_state.json"
+already_open=false
+if [[ -f "$popup_state" ]]; then
+    already_open="$(jq -r '.expanded // false' "$popup_state")"
+fi
+
+if [[ "$already_open" != "true" ]]; then
+    # kdialog --passivepopup always shows "kdialog" as the sender — going straight to
+    # the Notifications D-Bus API lets us set app_name to something recognizable.
+    gdbus call --session --dest org.freedesktop.Notifications \
+        --object-path /org/freedesktop/Notifications \
+        --method org.freedesktop.Notifications.Notify \
+        "KClaude" 0 "kclaude" "$title" "$message" "[]" "{}" 8000 >/dev/null
+fi
