@@ -6,6 +6,7 @@ import QtCore
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.components 3.0 as PlasmaComponents
 import org.kde.plasma.plasma5support as Plasma5Support
 import org.kde.plasma.plasmoid
@@ -294,6 +295,11 @@ Item {
                 checkable: true
                 checked: Plasmoid.configuration.pin
                 onToggled: Plasmoid.configuration.pin = checked
+                // Only meaningful when there's a popup to keep open. An
+                // embedded desktop instance (large enough to skip the
+                // compact+popup mode) has nothing to pin — same convention
+                // KDE Connect's own applet follows.
+                visible: Plasmoid.formFactor !== PlasmaCore.Types.Planar
 
                 PlasmaComponents.ToolTip.visible: hovered
                 PlasmaComponents.ToolTip.text: i18n("Keep this window open even when it loses focus")
