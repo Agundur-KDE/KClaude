@@ -1,3 +1,15 @@
+kclaude (0.3.6-1) unstable; urgency=medium
+
+  * Session export: copy sessions.json to a timestamped backup.
+  * Session import: scan ~/.claude/projects for sessions not yet saved,
+    suggest a name from each session's latest title, add them one by one.
+  * Live name-sync: a running session's /rename'd name is mirrored into
+    KClaude's own session list, so the two displays don't drift apart.
+  * launch() now passes --name so Claude Code's own prompt-box chip and
+    /resume picker show the same name as KClaude.
+
+ -- Agundur <info@agundur.de>  Mon, 13 Jul 2026 12:00:00 +0200
+
 kclaude (0.3.5-1) unstable; urgency=medium
 
   * Pin button to keep the panel popup open (panel only, not on a desktop
