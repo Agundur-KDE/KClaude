@@ -15,3 +15,6 @@ X-Plasma-DBusRunner-Service=de.agundur.kclauderunner
 X-Plasma-DBusRunner-Path=/kclauderunner
 X-Plasma-Request-Actions-Once=true
 X-Plasma-Runner-Min-Letter-Count=2
+X-Plasma-Runner-Match-Regex=^kc .+
+X-Plasma-Runner-Syntaxes=kc :q:
+X-Plasma-Runner-Syntax-Descriptions=Resume or focus a saved KClaude session by name
