@@ -1,0 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Agundur <info@agundur.de>
+# SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+[D-BUS Service]
+Name=de.agundur.kclauderunner
+Exec=/usr/bin/kclauderunner

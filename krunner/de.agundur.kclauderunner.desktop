@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: 2026 Agundur <info@agundur.de>
+# SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+[Desktop Entry]
+Type=Service
+X-KDE-ServiceTypes=Plasma/Runner
+Name=KClaude
+Comment=Resume a saved Claude Code session — type "kc <name>"
+Icon=kclaude
+X-KDE-PluginInfo-Name=kclauderunner
+X-KDE-PluginInfo-Version=1.0
+X-KDE-PluginInfo-License=GPL
+X-KDE-PluginInfo-EnabledByDefault=true
+X-Plasma-API=DBus
+X-Plasma-DBusRunner-Service=de.agundur.kclauderunner
+X-Plasma-DBusRunner-Path=/kclauderunner
+X-Plasma-Request-Actions-Once=true
+X-Plasma-Runner-Min-Letter-Count=2

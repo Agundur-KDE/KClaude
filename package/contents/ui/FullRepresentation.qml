@@ -351,9 +351,13 @@ Item {
         // Wrap claude in tmux so the cookie button can inject text via
         // `tmux send-keys` later — only when starting fresh (the "found"
         // branch below just raises the window, tmux is already running
-        // inside from the original launch).
+        // inside from the original launch). `-A`: if a tmux session with
+        // this marker already exists (e.g. its konsole window was closed
+        // but the tmux server outlived it — `found` only checks for a
+        // live konsole process, not a live tmux session), attach instead
+        // of erroring with "duplicate session: <marker>".
         if (root.hasTmux)
-            spawn = spawn.replace("-e claude", "-e tmux new-session -s " + ShellQuote.shellQuote(marker) + " claude")
+            spawn = spawn.replace("-e claude", "-e tmux new-session -A -s " + ShellQuote.shellQuote(marker) + " claude")
         spawn += " --resume " + ShellQuote.shellQuote(session.sessionId)
 
         // Plain `pgrep -f marker` self-matches: the whole command below is

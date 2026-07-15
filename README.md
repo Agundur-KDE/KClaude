@@ -186,6 +186,32 @@ out with a tooltip; everything else about KClaude works exactly as before.
 Please don't overfeed your Claude. One cookie is a thank-you; fifty in a row
 is a denial-of-service attack on its patience.
 
+## KRunner plugin
+
+Optional, separate from the panel widget: type `kc <name>` in KRunner
+(Alt+Space) to raise or resume a saved session by name, without opening the
+panel first. Fuzzy-matches against the same `~/.config/kclaude/sessions.json`
+the panel writes, and reuses the same spawn/focus/tmux logic as clicking a
+session in the panel.
+
+It's a standalone D-Bus runner (`krunner/kclauderunner.py`, `org.kde.krunner1`
+interface) — not bundled into the plasmoid's `.plasmoid`/RPM/`.deb` install
+yet, so it needs a manual install for now:
+
+```bash
+mkdir -p ~/.local/share/krunner/dbusplugins ~/.local/share/dbus-1/services
+cp krunner/de.agundur.kclauderunner.desktop ~/.local/share/krunner/dbusplugins/
+cat > ~/.local/share/dbus-1/services/de.agundur.kclauderunner.service <<EOF
+[D-BUS Service]
+Name=de.agundur.kclauderunner
+Exec=/usr/bin/python3 $(pwd)/krunner/kclauderunner.py
+EOF
+kquitapp6 krunner   # picks up the new plugin on its next auto-start
+```
+
+Needs `python3-dbus` (`dbus-python`) and PyGObject — both commonly
+preinstalled on KDE systems, since Plasma itself depends on them.
+
 ## Contributing
 
 Fork and adapt freely.

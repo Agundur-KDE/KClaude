@@ -1,2 +1,3 @@
 build/
 .kateproject.build
+__pycache__/
