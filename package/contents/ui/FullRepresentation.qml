@@ -334,18 +334,12 @@ Item {
         if (session.name)
             spawn += " --name " + ShellQuote.shellQuote(session.name)
 
-        if (!session.sessionId) {
-            executable.connectSource(spawn)
-            return
-        }
-
         // sessionId is Claude Code's own UUID, safe to use unquoted as both
-        // a pgrep pattern and a window-title marker. If a konsole tagged
-        // with this session is already running, raise it via a KWin script
-        // instead of spawning a duplicate — cheaper and more reliable than
-        // embedding a terminal in the popup (no separate process lifetime
-        // to manage, keeps normal window-manager behavior).
-        const marker = "kclaude-" + session.sessionId
+        // a pgrep pattern and a window-title marker. A brand-new session
+        // doesn't have one yet, so mint an ad-hoc marker instead — same
+        // tmux/tabtitle wrapping either way, so the cookie button works
+        // immediately even before Claude Code has assigned a real session ID.
+        const marker = session.sessionId ? "kclaude-" + session.sessionId : "kclaude-new-" + Date.now()
         root.lastMarker = marker
         spawn = spawn.replace("konsole --hold", "konsole --hold -p tabtitle=" + ShellQuote.shellQuote(marker))
         // Wrap claude in tmux so the cookie button can inject text via
@@ -358,6 +352,12 @@ Item {
         // of erroring with "duplicate session: <marker>".
         if (root.hasTmux)
             spawn = spawn.replace("-e claude", "-e tmux new-session -A -s " + ShellQuote.shellQuote(marker) + " claude")
+
+        if (!session.sessionId) {
+            executable.connectSource(spawn)
+            return
+        }
+
         spawn += " --resume " + ShellQuote.shellQuote(session.sessionId)
 
         // Plain `pgrep -f marker` self-matches: the whole command below is
