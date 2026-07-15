@@ -1,3 +1,13 @@
+kclaude (0.3.8-1) unstable; urgency=medium
+
+  * New sessions are now wrapped in tmux too (ad-hoc marker), so the
+    cookie button works right away instead of only after a resume.
+  * KRunner plugin (type "kc <name>" to raise/resume a session) — not
+    packaged here, download kclauderunner-*.tar.gz from the release
+    and run install.sh.
+
+ -- Agundur <info@agundur.de>  Wed, 15 Jul 2026 15:15:00 +0200
+
 kclaude (0.3.7-1) unstable; urgency=medium
 
   * Cookie button: sends 🍪 into whichever session KClaude last launched
