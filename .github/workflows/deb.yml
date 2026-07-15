@@ -126,6 +126,17 @@ jobs:
           cd ..
           ls -la dist/*.plasmoid
 
+      - name: Build KRunner plugin package
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          dir="dist/kclauderunner-${version}"
+          mkdir -p "$dir"
+          cp krunner/kclauderunner.py krunner/de.agundur.kclauderunner.desktop \
+             krunner/install.sh krunner/uninstall.sh krunner/README.md LICENSE "$dir/"
+          tar czf "dist/kclauderunner-${version}.tar.gz" -C dist "kclauderunner-${version}"
+          ls -la dist/*.tar.gz
+
       - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -134,4 +145,4 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
             || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes
-          gh release upload "$TAG" dist/dist/*.deb dist/*.plasmoid --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$TAG" dist/dist/*.deb dist/*.plasmoid dist/*.tar.gz --repo "$GITHUB_REPOSITORY" --clobber
