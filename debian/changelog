@@ -1,3 +1,11 @@
+kclaude (0.3.7-1) unstable; urgency=medium
+
+  * Cookie button: sends 🍪 into whichever session KClaude last launched
+    or focused, via `tmux send-keys` (optional dependency — greys out
+    without tmux installed). Raises the target window first.
+
+ -- Agundur <info@agundur.de>  Wed, 15 Jul 2026 07:00:00 +0200
+
 kclaude (0.3.6-1) unstable; urgency=medium
 
   * Session export: copy sessions.json to a timestamped backup.
