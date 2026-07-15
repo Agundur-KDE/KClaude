@@ -32,6 +32,8 @@ Item {
     property string defaultDir: ""
     property int cleanupPeriodDays: 30
     property var expiredSessionIds: []
+    property bool hasTmux: false
+    property string lastMarker: ""
     readonly property string homeDir: StandardPaths.standardLocations(StandardPaths.HomeLocation)[0] || ""
 
     signal sessionStartedWaiting(string sessionId)
@@ -344,7 +346,14 @@ Item {
         // embedding a terminal in the popup (no separate process lifetime
         // to manage, keeps normal window-manager behavior).
         const marker = "kclaude-" + session.sessionId
+        root.lastMarker = marker
         spawn = spawn.replace("konsole --hold", "konsole --hold -p tabtitle=" + ShellQuote.shellQuote(marker))
+        // Wrap claude in tmux so the cookie button can inject text via
+        // `tmux send-keys` later — only when starting fresh (the "found"
+        // branch below just raises the window, tmux is already running
+        // inside from the original launch).
+        if (root.hasTmux)
+            spawn = spawn.replace("-e claude", "-e tmux new-session -s " + ShellQuote.shellQuote(marker) + " claude")
         spawn += " --resume " + ShellQuote.shellQuote(session.sessionId)
 
         // Plain `pgrep -f marker` self-matches: the whole command below is
@@ -355,6 +364,16 @@ Item {
         const found = "found=0; for pid in $(pgrep -f " + ShellQuote.shellQuote(marker) + "); do "
             + "[ \"$(cat /proc/$pid/comm 2>/dev/null)\" = konsole ] && found=1; done; [ \"$found\" = 1 ]"
 
+        const activate = focusCommand(marker)
+
+        executable.connectSource("if " + found + "; then " + activate + "; else " + spawn + "; fi")
+    }
+
+    // KWin script that raises whichever window's caption contains `marker`.
+    // Shared by launch() (raise instead of respawn) and sendCookie() (bring
+    // the target session forward before the keystroke lands, so it doesn't
+    // silently land in whatever else happens to be focused — e.g. KRunner).
+    function focusCommand(marker) {
         const focusScript = "/tmp/" + marker + ".kwinscript.js"
         const js = "var w=workspace.windowList();for(var i=0;i<w.length;i++){"
             + "if(w[i].caption&&w[i].caption.indexOf(" + JSON.stringify(marker) + ")!==-1){"
@@ -362,13 +381,11 @@ Item {
         // loadScript fails (-1) if a plugin under this name is already
         // loaded — unload first so every activation starts from a clean
         // slate regardless of leftover state from a previous call.
-        const activate = "cat > " + ShellQuote.shellQuote(focusScript) + " <<'EOF'\n" + js + "\nEOF\n"
+        return "cat > " + ShellQuote.shellQuote(focusScript) + " <<'EOF'\n" + js + "\nEOF\n"
             + "qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript kclaude-focus\n"
             + "qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "
             + ShellQuote.shellQuote(focusScript) + " kclaude-focus\n"
             + "qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start"
-
-        executable.connectSource("if " + found + "; then " + activate + "; else " + spawn + "; fi")
     }
 
     function formatResetTime(epochSeconds) {
@@ -386,6 +403,29 @@ Item {
         reloadNotify()
         reloadSettings()
         reloadCleanupPeriodDays()
+        checkTmux()
+    }
+
+    // Cookie injection (tmux send-keys) needs tmux wrapping the claude
+    // process, not just installed — check once, sessions launched before
+    // this check runs still spawn the old (unwrapped) way this run.
+    function checkTmux() {
+        runCommand("command -v tmux", function(data) {
+            root.hasTmux = data["exit code"] === 0
+        })
+    }
+
+    // tmux send-keys writes straight into the pty, works identically on
+    // X11 and Wayland — unlike xdotool/ydotool it needs no global input-
+    // injection daemon or /dev/uinput permissions. lastMarker is whichever
+    // session KClaude most recently launched/focused; there's no separate
+    // "active session" query, so this is the practical proxy for it.
+    function sendCookie() {
+        if (!root.hasTmux || !root.lastMarker) return
+        const marker = root.lastMarker
+        const cookie = "tmux send-keys -t " + ShellQuote.shellQuote(marker)
+            + " " + ShellQuote.shellQuote("🍪") + " Enter"
+        runCommand(focusCommand(marker) + "\n" + cookie)
     }
 
     // status.json/quota.json are written by external Claude Code hook
@@ -785,8 +825,24 @@ Item {
         }
 
         RowLayout {
-            Layout.alignment: Qt.AlignRight
+            Layout.fillWidth: true
             visible: !root.showSettings && !root.showImport
+
+            PlasmaComponents.Button {
+                text: "🍪"
+                visible: !root.addingSession
+                enabled: root.hasTmux && root.lastMarker.length > 0
+                onClicked: root.sendCookie()
+
+                PlasmaComponents.ToolTip.visible: hovered
+                PlasmaComponents.ToolTip.text: !root.hasTmux
+                    ? i18n("Requires tmux (not installed)")
+                    : (root.lastMarker ? i18n("Send a cookie to the active session") : i18n("Open a session first"))
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
 
             PlasmaComponents.Button {
                 text: i18n("Cancel")

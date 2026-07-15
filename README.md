@@ -39,6 +39,10 @@
   Claude Code has already deleted shows dimmed with a tooltip explaining
   why — `--resume` would silently start a fresh conversation instead of
   actually resuming. See "Session retention" below.
+- **Cookie button.** 🍪 sends a real keystroke into whichever session KClaude
+  last launched or focused, and raises its window first. Needs `tmux`
+  (optional, see Requirements) — greys out without it. See "Cookie button"
+  below.
 
 Sessions persist to `~/.config/kclaude/sessions.json`, the sound toggle to
 `~/.config/kclaude/notify.json`, live status to `~/.config/kclaude/status.json`,
@@ -55,7 +59,8 @@ reach into the panel widget at all.
 Pure QML, no compiled plugin — Qt ≥ 6.7 and KDE Frameworks ≥ 6.10 (whatever
 your Plasma 6 install already has) is all you need at runtime.
 `konsole`, `gdbus`, `paplay`, `jq`, `spectacle` — for launching sessions and
-the notification/status hooks.
+the notification/status hooks. `tmux` (optional) — only for the 🍪 button,
+everything else works fine without it.
 
 UI is translated into German, Spanish and French (falls back to English
 otherwise) — see `translate/`.
@@ -159,6 +164,27 @@ risks a lost-update race. For each saved session it checks whether
 accurate than estimating from a saved date — and dims the entry with an
 explanatory tooltip if it's gone. Want longer retention? Set
 `cleanupPeriodDays` yourself in `~/.claude/settings.json`.
+
+## Cookie button
+
+🍪 sends a real keystroke — literally `🍪` + Enter — into whichever session
+KClaude most recently launched or focused, via `tmux send-keys`. It's not a
+notification; if the session is `tmux`-wrapped (see Requirements), the text
+lands straight in Claude's actual input, same as if you'd typed it yourself.
+
+Why `tmux` and not `xdotool`/`ydotool`: `xdotool` doesn't reliably reach
+native Wayland windows, and `ydotool` needs a systemwide `ydotoold` daemon
+with `/dev/uinput` access — global keystroke injection, more than a joke
+button warrants. `tmux send-keys` writes straight into the pty it owns, no
+X11/Wayland dependency, no elevated permissions.
+
+Requires `tmux` to be installed, and the session to have been (re)started
+after KClaude detected it — sessions launched before `tmux` was installed
+won't be wrapped until you relaunch them. No `tmux`? The button just greys
+out with a tooltip; everything else about KClaude works exactly as before.
+
+Please don't overfeed your Claude. One cookie is a thank-you; fifty in a row
+is a denial-of-service attack on its patience.
 
 ## Contributing
 
